@@ -7,6 +7,12 @@ const API_BASE_URL =
   !configuredApiBaseUrl.includes("127.0.0.1:8000")
     ? configuredApiBaseUrl
     : "http://localhost:8001/api";
+const API_BASE_URLS = Array.from(
+  new Set([
+    API_BASE_URL,
+    API_BASE_URL.includes("localhost:8001") ? API_BASE_URL.replace("localhost:8001", "localhost:8081") : API_BASE_URL,
+  ])
+);
 
 // ─── Auth token reader ────────────────────────────────────────────────────────
 // Reads from Zustand-persisted localStorage. Tries both 'token' and
@@ -27,7 +33,11 @@ export const getAuthToken = (): string => {
 };
 
 // ─── Fetch wrapper ────────────────────────────────────────────────────────────
-const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
+const requestJson = async (
+  endpoint: string,
+  options: RequestInit = {},
+  withAuth = false
+) => {
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
@@ -35,49 +45,44 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  for (const baseUrl of API_BASE_URLS) {
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    } catch (error) {
+      continue;
+    }
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      if (typeof window !== "undefined") {
+    if (!response.ok) {
+      if (withAuth && response.status === 401 && typeof window !== "undefined") {
         localStorage.removeItem("cancer-copilot-auth");
         window.location.href = "/login";
       }
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.detail || errorData?.error || `API error ${response.status}`
+      );
     }
-    const errorData = await response.json().catch(() => null);
-    throw new Error(
-      errorData?.detail || errorData?.error || `API error ${response.status}`
-    );
+
+    return response.json();
   }
 
-  return response.json();
+  throw new Error(
+    `Cannot reach the API at ${API_BASE_URL}${endpoint}. Make sure the backend is running on 8001 or 8081 and reachable.`
+  );
 };
+
+// ─── Fetch wrapper ────────────────────────────────────────────────────────────
+const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) =>
+  requestJson(endpoint, options, true);
 
 // ─── Public (no-auth) fetch ───────────────────────────────────────────────────
 // Used for endpoints that intentionally don't require authentication
-const fetchPublic = async (endpoint: string, options: RequestInit = {}) => {
-  const token = getAuthToken(); // still attach if available, but doesn't fail if absent
-  const headers = new Headers(options.headers || {});
-  headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    throw new Error(
-      errorData?.detail || errorData?.error || `API error ${response.status}`
-    );
-  }
-
-  return response.json();
-};
+const fetchPublic = async (endpoint: string, options: RequestInit = {}) =>
+  requestJson(endpoint, options, false);
 
 // ─── API surface ──────────────────────────────────────────────────────────────
 export const api = {
@@ -85,11 +90,11 @@ export const api = {
   health: () => fetchPublic("/health"),
 
   // Auth
-  register: (data: any) => fetchWithAuth("/auth/register", {
+  register: (data: any) => fetchPublic("/auth/register", {
     method: "POST",
     body: JSON.stringify(data),
   }),
-  login: (credentials: any) => fetchWithAuth("/auth/login", {
+  login: (credentials: any) => fetchPublic("/auth/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   }),
