@@ -255,8 +255,8 @@ const PrognosticScores = ({ scores }: { scores: any }) => {
                 <h3 className="text-slate-300 font-semibold mb-6 flex items-center gap-2">
                     <Gauge className="w-4 h-4 text-[#0891B2]" /> {title}
                 </h3>
-                <div className="relative w-48 h-24 overflow-hidden mb-6 flex justify-center mt-4">
-                    <svg viewBox="0 0 200 100" className="w-full h-full">
+                <div className="relative w-56 h-[130px] flex justify-center mt-4 mb-4">
+                    <svg viewBox="0 0 200 120" className="w-full h-full overflow-visible">
                         <defs>
                             <linearGradient id={`${title.replace(/\s+/g,'')}Grad`} x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor="#10b981" />
@@ -272,10 +272,10 @@ const PrognosticScores = ({ scores }: { scores: any }) => {
                             style={{ transformOrigin: "100px 100px" }}
                         >
                             <path d="M 95 100 L 100 20 L 105 100 Z" fill="#fff" />
-                            <circle cx="100" cy="100" r="8" fill="#fff" />
+                            <circle cx="100" cy="100" r="10" fill="#fff" />
                         </motion.g>
                     </svg>
-                    <div className="absolute bottom-0 text-3xl font-bold font-mono text-white bg-slate-900 border border-slate-800 rounded-xl px-4 py-1 translate-y-2">
+                    <div className="absolute -bottom-2 text-3xl font-bold font-mono text-white bg-slate-900 border border-slate-700 rounded-xl px-4 py-1 shadow-lg z-10">
                         {data.score}
                     </div>
                 </div>

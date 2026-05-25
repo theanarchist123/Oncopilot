@@ -14,41 +14,37 @@ async def fetch_matched_trials(subtype: str, clinical_data: ClinicalData) -> lis
     matched to the patient's specific subtype and biomarkers.
     """
     
-    # 1. Build the search conditions
-    conditions = ["Breast Cancer"]
-    if subtype == "Triple-Negative":
-        conditions.append("Triple Negative Breast Cancer")
-    elif subtype == "HER2-Enriched":
-        conditions.append("HER2 Positive Breast Cancer")
-    elif "Luminal" in subtype:
-        conditions.append("ER Positive Breast Cancer")
-        
-    condition_query = " OR ".join(conditions)
-    
-    # 2. Build intervention terms based on biomarkers
-    interventions = []
-    if clinical_data:
-        if str(clinical_data.pdl1_status).lower() in ("positive", "yes", "+"):
-            interventions.append("Pembrolizumab")
-            interventions.append("Immunotherapy")
-        if str(clinical_data.brca1_status).lower() in ("positive", "yes") or str(clinical_data.brca2_status).lower() in ("positive", "yes"):
-            interventions.append("Olaparib")
-            interventions.append("PARP Inhibitor")
-        if str(clinical_data.pik3ca_status).lower() in ("positive", "yes", "mutation"):
-            interventions.append("Alpelisib")
-    
-    intervention_query = " OR ".join(interventions) if interventions else ""
-
+    # 1. Base condition
     params = {
-        "query.cond": condition_query,
+        "query.cond": "Breast Cancer",
         "filter.overallStatus": "RECRUITING",
         "fields": "NCTId,BriefTitle,OverallStatus,Phase,ConditionsModule,ArmsInterventionsModule",
         "pageSize": 5, # We just want the top 5 matches
         "sort": "LastUpdatePostDate:desc"
     }
     
-    if intervention_query:
-        params["query.intr"] = intervention_query
+    # 2. Build search terms based on subtype and biomarkers
+    terms = []
+    if subtype == "Triple-Negative":
+        terms.append("Triple Negative")
+    elif subtype == "HER2-Enriched":
+        terms.append("HER2 Positive")
+    elif "Luminal" in subtype:
+        terms.append("ER Positive")
+        
+    if clinical_data:
+        if str(clinical_data.pdl1_status).lower() in ("positive", "yes", "+"):
+            terms.append("Pembrolizumab")
+        if str(clinical_data.brca1_status).lower() in ("positive", "yes") or str(clinical_data.brca2_status).lower() in ("positive", "yes"):
+            terms.append("Olaparib")
+        if str(clinical_data.pik3ca_status).lower() in ("positive", "yes", "mutation"):
+            terms.append("Alpelisib")
+            
+    if terms:
+        # ClinicalTrials.gov query.term accepts space-separated words (acts as AND)
+        # Using OR explicitly can sometimes break the v2 simple parser, 
+        # but just passing the terms will search for them.
+        params["query.term"] = " ".join(terms)
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
