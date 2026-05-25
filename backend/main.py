@@ -17,7 +17,8 @@ from core.database import engine, Base
 import models  # noqa: F401
 
 # Routes
-from api.routes import auth, cases, patient, clinical, analysis, instant_analysis, reports, pdf, analytics, notifications, second_opinion, engine
+from api.routes import auth, cases, patient, clinical, analysis, instant_analysis, reports, pdf, analytics, notifications, second_opinion
+from api.routes import engine as engine_router
 
 # ─── Rate limiter ────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
@@ -48,11 +49,15 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
+# CORS — allow all origins in production (Vercel), restrict in dev
+_origins = settings.origins_list
+if settings.app_env != "development":
+    _origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.origins_list,
-    allow_credentials=True,
+    allow_origins=_origins,
+    allow_credentials=_origins != ["*"],  # credentials forbidden with wildcard
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -82,7 +87,7 @@ app.include_router(clinical.router)
 app.include_router(patient.router)
 app.include_router(analysis.router)
 app.include_router(instant_analysis.router)
-app.include_router(engine.router)
+app.include_router(engine_router.router)
 app.include_router(reports.router)
 app.include_router(pdf.router)
 app.include_router(analytics.router)

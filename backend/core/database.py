@@ -5,7 +5,12 @@ from sqlalchemy.orm import DeclarativeBase
 
 from core.config import settings
 
-_is_postgres = settings.database_url.startswith("postgresql")
+_db_url = settings.database_url
+# Vercel / Supabase provide plain postgresql:// URLs — force asyncpg dialect
+if _db_url.startswith("postgresql://") or _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1).replace("postgres://", "postgresql+asyncpg://", 1)
+
+_is_postgres = _db_url.startswith("postgresql")
 
 _engine_kwargs = {"echo": settings.debug}
 if _is_postgres:
@@ -21,7 +26,7 @@ if _is_postgres:
         }
     )
 
-engine = create_async_engine(settings.database_url, **_engine_kwargs)
+engine = create_async_engine(_db_url, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
