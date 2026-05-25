@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAnalysisResultStore } from "@/store";
 import { api } from "@/lib/api";
+import { ClinicalTrialsPanel } from "@/components/ClinicalTrialsPanel";
 
 // ─── Colour config per subtype ────────────────────────────────────────────────
 const SUBTYPE_CFG: Record<string, { color: string; bg: string; border: string; glow: string; short: string }> = {
@@ -646,6 +647,9 @@ function ResultsContent() {
                     ))}
                 </motion.div>
             </div>
+
+            {/* Clinical Trials Matcher */}
+            {result.case_id && <ClinicalTrialsPanel caseId={result.case_id} />}
 
             {/* Doctor Finalization */}
             {result.case_id && <DoctorFinalizationPanel caseId={result.case_id} recommendations={recs} />}

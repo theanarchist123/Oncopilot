@@ -142,3 +142,27 @@ async def finalize_case(
     
     await db.commit()
     return SuccessResponse(message="Treatment plan finalized successfully")
+
+@router.get("/{case_id}/trials", response_model=SuccessResponse)
+async def get_matched_trials(
+    case_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from services.clinical_trials_service import fetch_matched_trials
+    
+    case = await get_case(db, case_id, current_user.id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+        
+    # Get the latest result for subtype
+    q = select(Result).where(Result.case_id == case_id, Result.is_simulation == False).order_by(Result.version.desc())
+    result = (await db.execute(q)).scalars().first()
+    
+    if not result or not result.molecular_subtype:
+        return SuccessResponse(data=[])
+        
+    trials = await fetch_matched_trials(result.molecular_subtype, case.clinical_data)
+    
+    return SuccessResponse(data=trials)
+
