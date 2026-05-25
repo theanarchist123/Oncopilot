@@ -35,23 +35,26 @@ Doctors enter a patient case (biomarkers, genomic scores, comorbidities), upload
 
 ### 1. Landing & Onboarding
 The public face of OnCopilot, designed to highlight the platform's capability to evaluate 16+ biomarkers against four global guidelines in seconds.
-> *[Insert Landing Page screenshot here: `![Landing Page](./assets/landing.png)`]*
+![Landing & Onboarding](./assets/landing.png)
 
 ### 2. Clinical Dashboard (Doctor View)
 A high-level overview for oncologists to manage active cases, track analysis statuses, and jump into pending reviews for patients like Karen, Wamiqa, and Gopi.
-> *[Insert Dashboard Overview screenshot here: `![Dashboard Overview](./assets/dashboard.png)`]*
+
+![Dashboard Overview](./assets/dashboard.png)
 
 ### 3. AI Analysis & Prognosis
 Deep dive into a specific patient's results, showing the AI-enhanced molecular classification (e.g., Luminal A), guideline-based rationale, and calculated prognostic risk scores (NPI & CTS5) using intuitive gauge visualisations.
-> *[Insert AI Results Top screenshot here: `![AI Analysis Results](./assets/analysis_top.png)`]*
+
+![AI Analysis Results](./assets/analysis.png)
 
 ### 4. Live Clinical Trials & Finalization
 Dynamic fetching of active, recruiting clinical trials specifically matched to the patient's molecular subtype (via ClinicalTrials.gov v2 API). Below it sits the Doctor Finalization panel, where the oncologist can accept, modify, or override the AI's primary treatment pathway.
-> *[Insert Clinical Trials & Finalization screenshot here: `![Trials and Finalization](./assets/trials_finalization.png)`]*
+
+![Trials and Finalization](./assets/trials.png)
 
 ### 5. Patient-Facing Portal
 A reassuring, simplified view designed for the patient (e.g., "Good morning, Karen"). It strips away complex clinical jargon to clearly present their cancer type and the oncologist-approved treatment plan (e.g., Endocrine Monotherapy) with visual timelines.
-> *[Insert Patient Portal screenshot here: `![Patient Portal](./assets/patient_portal.png)`]*
+![Patient Portal](./assets/patient_portal.png)
 
 ---
 
