@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +23,14 @@ class Result(Base):
     recommendations: Mapped[dict | None] = mapped_column(JSON)
     alerts: Mapped[dict | None] = mapped_column(JSON)
     rule_trace: Mapped[dict | None] = mapped_column(JSON)
+    validation_alerts: Mapped[dict | None] = mapped_column(JSON)
     is_simulation: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Doctor Finalization
+    doctor_decision: Mapped[str | None] = mapped_column(String(50)) # 'accept', 'modify', 'override'
+    final_treatment_plan: Mapped[dict | None] = mapped_column(JSON)
+    override_reason: Mapped[str | None] = mapped_column(Text)
+    
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     case: Mapped["Case"] = relationship("Case", back_populates="results")

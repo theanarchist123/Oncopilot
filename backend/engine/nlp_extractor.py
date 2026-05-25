@@ -75,7 +75,7 @@ PATTERNS: dict[str, list[str]] = {
         r"stromal TILs?[\s:]*(\d+\.?\d*)%?",
     ],
     "ONCOTYPE_SCORE": [
-        r"[Oo]ncotype\s+DX[\s:]*(\d+)\b",
+        r"[Oo]ncotype\s+DX(?:.*?score)?[\s:]*(\d+)\b",
         r"[Rr]ecurrence [Ss]core[\s:]*(\d+)\b",
     ],
 }

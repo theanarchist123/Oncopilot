@@ -236,6 +236,9 @@ export interface AnalysisResult {
   patient_name?: string;
   patient_age?: number;
   analyzed_at: string;
+  case_id?: string;
+  risk_scores?: Record<string, any>;
+  validation_alerts?: Array<Record<string, any>>;
 }
 
 interface AnalysisResultState {

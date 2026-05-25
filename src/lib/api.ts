@@ -110,6 +110,10 @@ export const api = {
     method: "PATCH",
     body: JSON.stringify(data),
   }),
+  finalizeCase: (id: string, data: any) => fetchWithAuth(`/cases/${id}/finalize`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
 
   // Clinical Data
   saveClinicalData: (caseId: string, data: any) =>
@@ -140,4 +144,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  // Patient Portal
+  getPatientPlan: (caseId: string) => fetchPublic(`/patient/my-plan/${caseId}`),
+
+  // Engine Rules
+  getEngineRules: () => fetchWithAuth("/engine/rules"),
 };

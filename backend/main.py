@@ -17,7 +17,7 @@ from core.database import engine, Base
 import models  # noqa: F401
 
 # Routes
-from api.routes import auth, cases, clinical, analysis, reports, pdf, analytics, notifications, second_opinion, instant_analysis
+from api.routes import auth, cases, patient, clinical, analysis, instant_analysis, reports, pdf, analytics, notifications, second_opinion, engine
 
 # ─── Rate limiter ────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
@@ -79,8 +79,10 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(auth.router)
 app.include_router(cases.router)
 app.include_router(clinical.router)
+app.include_router(patient.router)
 app.include_router(analysis.router)
 app.include_router(instant_analysis.router)
+app.include_router(engine.router)
 app.include_router(reports.router)
 app.include_router(pdf.router)
 app.include_router(analytics.router)

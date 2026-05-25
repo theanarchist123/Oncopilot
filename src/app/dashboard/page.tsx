@@ -97,7 +97,7 @@ export default function DashboardPage() {
             />
          </div>
          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
-            {["All", "Under Analysis", "Pending Review", "HER2-Enriched", "TNBC"].map(f => (
+            {["All", "Under Analysis", "Treatment Decided", "Pending Review", "HER2-Enriched", "TNBC"].map(f => (
                <Badge
                  key={f} 
                  variant={filter === f ? "teal" : "outline"}
@@ -153,14 +153,19 @@ export default function DashboardPage() {
                                <div className="w-2 h-2 rounded-full bg-[#0891B2] status-analyzing" />
                                <span className="text-sm font-medium">Under Analysis</span>
                             </div>
+                         ) : c.status === "Treatment Decided" ? (
+                            <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                               <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                               <span className="text-sm font-medium">Treatment Decided</span>
+                            </div>
                          ) : c.status === "Pending Review" ? (
                             <div className="flex items-center gap-2 bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-full border border-amber-500/20">
                                <div className="w-2 h-2 rounded-full bg-amber-500 status-pending" />
                                <span className="text-sm font-medium">Pending Review</span>
                             </div>
                          ) : (
-                            <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20">
-                               <div className="w-2 h-2 rounded-full bg-emerald-500 status-ongoing" />
+                            <div className="flex items-center gap-2 bg-slate-500/10 text-slate-400 px-3 py-1.5 rounded-full border border-slate-500/20">
+                               <div className="w-2 h-2 rounded-full bg-slate-500 status-ongoing" />
                                <span className="text-sm font-medium">{c.status}</span>
                             </div>
                          )}

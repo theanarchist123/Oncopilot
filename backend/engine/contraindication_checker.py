@@ -5,6 +5,7 @@ Each rule is independently testable.
 """
 from __future__ import annotations
 from typing import Any
+from engine.drug_interaction_checker import check_interactions
 
 
 SEVERITY = {"HIGH": "HIGH", "MEDIUM": "MEDIUM", "LOW": "LOW"}
@@ -158,4 +159,5 @@ def run_all_checks(c: Any, protocols: list[dict]) -> list[dict]:
     alerts += check_renal(c.comorbidities, protocols)
     alerts += check_hepatic(c.comorbidities, c.medications, protocols)
     alerts += check_allergy(c.allergies, protocols)
+    alerts += check_interactions(c.medications, protocols)
     return alerts

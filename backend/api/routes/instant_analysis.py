@@ -39,6 +39,8 @@ class InstantAnalysisResponse(BaseModel):
     recommendations: list[dict[str, Any]]
     alerts: list[dict[str, Any]]
     rule_trace: list[dict[str, Any]]
+    validation_alerts: list[dict[str, Any]] = []
+    risk_scores: Optional[dict[str, Any]] = None
     ai_reasoning: dict[str, Any]
     patient_name: Optional[str] = None
     patient_age: Optional[int] = None
@@ -95,6 +97,7 @@ async def instant_analysis(
         comorbidities=cd.comorbidities or {},
         medications=cd.medications or "",
         allergies=cd.allergies or "",
+        patient_age=body.patient_age,
     )
 
     # 1. Deterministic pipeline (fast, always runs)
@@ -136,7 +139,8 @@ async def instant_analysis(
                     subtype_confidence=pipeline_result.subtype_confidence,
                     recommendations=enriched_paths,
                     alerts=pipeline_result.alerts,
-                    rule_trace=pipeline_result.rule_trace
+                    rule_trace=pipeline_result.rule_trace,
+                    validation_alerts=pipeline_result.validation_alerts
                 )
                 await save_result(db, case.id, sim_result, is_simulation=False, doctor_id=user.id)
                 case.status = "under_analysis"
@@ -150,6 +154,8 @@ async def instant_analysis(
         recommendations=enriched_paths,
         alerts=pipeline_result.alerts,
         rule_trace=pipeline_result.rule_trace,
+        validation_alerts=pipeline_result.validation_alerts,
+        risk_scores=pipeline_result.risk_scores,
         ai_reasoning=ai_reasoning,
         patient_name=body.patient_name,
         patient_age=body.patient_age,

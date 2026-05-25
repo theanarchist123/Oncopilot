@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { CheckCircle2, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { useAnalysisResultStore } from "@/store";
@@ -52,11 +53,11 @@ export default function NewCaseForm() {
     const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
     const [tumour, setTumour] = useState({ stage: "II", grade: 2, size: 2.5, nodes: false, nodeCount: 0 });
     const [biomarkers, setBiomarkers] = useState({
-        er: "Unknown", pr: "Unknown", her2: "Unknown", ki67: 15,
+        er: "Unknown", pr: "Unknown", her2: "Unknown", ki67: 15, ki67Known: false,
         brca1: "Unknown", brca2: "Unknown", tils: 10, oncotype: 15, mammaprint: "Not Done"
     });
     const [health, setHealth] = useState({
-        lvef: 60, comorbidities: [] as string[], medications: [] as string[], mInput: ""
+        lvef: 60, ecog: 0, comorbidities: [] as string[], medications: [] as string[], mInput: ""
     });
 
     const handleNext = () => setStep(p => Math.min(5, p + 1));
@@ -82,13 +83,14 @@ export default function NewCaseForm() {
                 er_status: biomarkers.er,
                 pr_status: biomarkers.pr,
                 her2_status: biomarkers.her2,
-                ki67_percent: biomarkers.ki67,
+                ki67_percent: biomarkers.ki67Known ? biomarkers.ki67 : null,
                 brca1_status: biomarkers.brca1,
                 brca2_status: biomarkers.brca2,
                 tils_percent: biomarkers.tils,
                 oncotype_dx_score: biomarkers.oncotype,
                 mammaprint: biomarkers.mammaprint === "Not Done" ? null : biomarkers.mammaprint,
                 lvef_percent: health.lvef,
+                ecog_score: health.ecog,
                 comorbidities: health.comorbidities.reduce((a: any, c) => ({ ...a, [c]: true }), {}),
                 medications: health.medications.join(", "),
             },
@@ -285,16 +287,23 @@ export default function NewCaseForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                       <div>
                           <div className="flex justify-between items-end mb-4">
-                              <span className="text-slate-300">Ki-67 Index</span>
+                              <div>
+                                  <span className="text-slate-300 block">Ki-67 Index</span>
+                                  <div className="flex items-center gap-2 mt-1">
+                                      <Switch checked={biomarkers.ki67Known} onCheckedChange={c => setBiomarkers({...biomarkers, ki67Known: c})} />
+                                      <span className="text-xs text-slate-500">Value Known</span>
+                                  </div>
+                              </div>
                               <div className="text-right">
-                                  <span className={`font-mono font-bold text-xl ${ki67Color}`}>{biomarkers.ki67}%</span>
-                                  <p className={`text-xs ${ki67Color} opacity-80`}>{ki67Label}</p>
+                                  <span className={`font-mono font-bold text-xl ${!biomarkers.ki67Known ? 'text-slate-600' : ki67Color}`}>{biomarkers.ki67Known ? `${biomarkers.ki67}%` : '--'}</span>
+                                  <p className={`text-xs ${!biomarkers.ki67Known ? 'text-slate-600' : ki67Color} opacity-80`}>{biomarkers.ki67Known ? ki67Label : 'Unknown'}</p>
                               </div>
                           </div>
                           <Slider 
+                             disabled={!biomarkers.ki67Known}
                              value={[biomarkers.ki67]} max={100} step={1}
                              onValueChange={v => setBiomarkers({...biomarkers, ki67: v[0]})}
-                             zoneColors={[{threshold: 0, color: "bg-emerald-500"}, {threshold: 14, color: "bg-amber-500"}, {threshold: 20, color: "bg-rose-500"}]}
+                             zoneColors={[{threshold: 0, color: "bg-emerald-500"}, {threshold: 20, color: "bg-amber-500"}, {threshold: 30, color: "bg-rose-500"}]}
                           />
                       </div>
 
@@ -372,6 +381,14 @@ export default function NewCaseForm() {
                     </div>
 
                     <Slider max={100} min={10} step={1} value={[health.lvef]} onValueChange={v => setHealth({...health, lvef: v[0]})} className="mt-4" />
+
+                    <div className="w-full mt-6">
+                        <label className="text-sm font-medium text-slate-300 block mb-2 text-left">ECOG Performance Status</label>
+                        <PillToggle options={["0", "1", "2", "3", "4"]} value={health.ecog.toString()} onChange={v => setHealth({...health, ecog: parseInt(v)})} />
+                        <p className="text-xs text-slate-500 mt-2 text-left">
+                            {health.ecog === 0 ? "0 - Fully active" : health.ecog === 1 ? "1 - Restricted in physically strenuous activity" : health.ecog === 2 ? "2 - Ambulatory, capable of selfcare" : health.ecog === 3 ? "3 - Capable of only limited selfcare" : "4 - Completely disabled"}
+                        </p>
+                    </div>
 
                     <AnimatePresence>
                         {isContraindicated && (
@@ -465,9 +482,76 @@ export default function NewCaseForm() {
             );
         }
 
+        const compFields = [
+            { id: "er", name: "ER Status", complete: biomarkers.er !== "Unknown", step: 3 },
+            { id: "pr", name: "PR Status", complete: biomarkers.pr !== "Unknown", step: 3 },
+            { id: "her2", name: "HER2 Status", complete: biomarkers.her2 !== "Unknown", step: 3 },
+            { id: "ki67", name: "Ki-67", complete: biomarkers.ki67Known, step: 3, warnText: "Ki-67 is missing. The system will default to a conservative classification. Results may be less precise." },
+            { id: "size", name: "Tumour Size", complete: tumour.size > 0, step: 2 },
+            { id: "nodes", name: "Lymph Nodes", complete: true, step: 2 },
+            { id: "stage", name: "Stage", complete: !!tumour.stage, step: 2 },
+            { id: "ecog", name: "ECOG Score", complete: true, step: 4 }
+        ];
+        const completedCount = compFields.filter(f => f.complete).length;
+        const totalCount = compFields.length;
+        const compPct = Math.round((completedCount / totalCount) * 100);
+        const r = 36, circ = 2 * Math.PI * r;
+        const offset = circ - (compPct / 100) * circ;
+        const isComplete = compPct === 100;
+
         return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold text-white mb-6">Final Clinical Review</h2>
+
+            {/* Data Completeness Radar */}
+            <div className={`p-6 rounded-2xl border transition-all ${isComplete ? "bg-emerald-950/20 border-emerald-500/30" : "bg-slate-900 border-slate-800"}`}>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-white flex items-center gap-2">
+                        📋 CLINICAL DATA COMPLETENESS
+                    </h3>
+                    <div className="flex items-center gap-4">
+                        <span className={`text-xl font-mono font-bold ${isComplete ? "text-emerald-400" : "text-white"}`}>{compPct}%</span>
+                        <div className="relative w-12 h-12">
+                            <svg className="rotate-[-90deg] w-full h-full" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r={r} fill="none" stroke="#1e293b" strokeWidth="8" />
+                                <motion.circle cx="40" cy="40" r={r} fill="none" stroke={isComplete ? "#10b981" : "#f59e0b"} strokeWidth="8"
+                                    strokeLinecap="round" strokeDasharray={circ}
+                                    initial={{ strokeDashoffset: circ }} animate={{ strokeDashoffset: offset }}
+                                    transition={{ duration: 1.2, ease: "easeOut" }}
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {compFields.map(f => (
+                        <div key={f.id} 
+                             onClick={() => !f.complete && setStep(f.step)}
+                             className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${f.complete ? "text-slate-300" : "text-amber-500 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 border border-amber-500/30"}`}>
+                            {f.complete ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <div className="w-4 h-4 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />}
+                            <span className="text-sm font-medium">{f.name} {f.complete ? "" : "(MISSING)"}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {compFields.filter(f => !f.complete).map(f => (
+                    <div key={f.id} className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3">
+                        <TriangleAlert className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm text-slate-300">{f.warnText || `${f.name} is missing. Please provide a value for accurate analysis.`}</p>
+                            <button onClick={() => setStep(f.step)} className="text-[#0891B2] text-sm mt-1 hover:underline font-medium">
+                                [Enter {f.name} →]
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {isComplete && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-emerald-400 text-sm font-medium">
+                        <CheckCircle2 className="w-5 h-5" /> Complete Data — Analysis Ready
+                    </motion.div>
+                )}
+            </div>
             
             <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3"]} className="w-full space-y-4">
                 <AccordionItem value="item-1" className="bg-slate-900 border border-slate-800 rounded-xl px-6 data-[state=open]:pb-2">

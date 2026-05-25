@@ -120,6 +120,7 @@ async def save_result(db: AsyncSession, case_id: uuid.UUID, pipeline_result,
         recommendations=pipeline_result.recommendations,
         alerts=pipeline_result.alerts,
         rule_trace=pipeline_result.rule_trace,
+        validation_alerts=pipeline_result.validation_alerts,
         is_simulation=is_simulation,
     )
     db.add(result)

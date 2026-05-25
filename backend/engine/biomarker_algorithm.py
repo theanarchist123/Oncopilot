@@ -40,6 +40,7 @@ class ClinicalInput:
     oncotype_dx_score: float | None = None
     mammaprint: str | None = None
     pam50: str | None = None
+    patient_age: int | None = None
     brca1_status: str = "Unknown"
     brca2_status: str = "Unknown"
 
@@ -75,6 +76,21 @@ class PipelineResult:
     recommendations: list[dict]
     alerts: list[dict]
     rule_trace: list[dict]
+    risk_scores: dict | None = None
+    validation_alerts: list[dict] = field(default_factory=list)
+
+
+def check_data_completeness(c: ClinicalInput) -> list[dict]:
+    alerts = []
+    if c.ki67_percent is None:
+        alerts.append({"field": "Ki-67", "status": "missing", "message": "Ki-67 is missing. The system will default to a conservative classification. Results may be less precise."})
+    if c.tumour_size is None or c.tumour_size == 0:
+        alerts.append({"field": "Tumour Size", "status": "missing", "message": "Tumour Size is missing."})
+    if c.lymph_nodes_involved and (c.lymph_node_count is None or c.lymph_node_count == 0):
+        alerts.append({"field": "Lymph Node Count", "status": "missing", "message": "Lymph Node Count is missing."})
+    if str(c.her2_status).lower() in ("unknown", "", "not done"):
+        alerts.append({"field": "HER2 Status", "status": "missing", "message": "HER2 Status is missing."})
+    return alerts
 
 
 # ─── STAGE 1: Subtype classifier ─────────────────────────────────────────────
@@ -98,7 +114,7 @@ def classify_subtype(c: ClinicalInput) -> tuple[str, float, list[dict]]:
     er_pos = _is_positive(c.er_status)
     pr_pos = _is_positive(c.pr_status)
     her2_pos = _is_positive(c.her2_status)
-    ki67 = c.ki67_percent if c.ki67_percent is not None else 14.0
+    ki67 = c.ki67_percent if c.ki67_percent is not None else 20.0
 
     known_count = sum([
         _is_known(c.er_status),
@@ -118,19 +134,19 @@ def classify_subtype(c: ClinicalInput) -> tuple[str, float, list[dict]]:
 
     if er_pos or pr_pos:
         if not her2_pos:
-            if ki67 < 14:
+            if ki67 < 20:
                 subtype = "Luminal A"
                 trace = [
                     {"label": "ER", "value": c.er_status, "conclusion": "ER positive → Luminal"},
                     {"label": "HER2", "value": c.her2_status, "conclusion": "HER2 negative"},
-                    {"label": "Ki-67", "value": f"{ki67}%", "conclusion": "< 14% → Low proliferation → Luminal A"},
+                    {"label": "Ki-67", "value": f"{ki67}%", "conclusion": "< 20% → Low proliferation → Luminal A"},
                 ]
             else:
                 subtype = "Luminal B (HER2-)"
                 trace = [
                     {"label": "ER/PR", "value": f"{c.er_status}/{c.pr_status}", "conclusion": "Hormone receptor positive"},
                     {"label": "HER2", "value": c.her2_status, "conclusion": "HER2 negative"},
-                    {"label": "Ki-67", "value": f"{ki67}%", "conclusion": "≥ 14% → High proliferation → Luminal B"},
+                    {"label": "Ki-67", "value": f"{ki67}%", "conclusion": "≥ 20% → High proliferation → Luminal B"},
                 ]
         else:
             subtype = "Luminal B (HER2+)"
@@ -357,7 +373,7 @@ def generate_treatment_pathways(
             "duration_months": "60–120",
             "rule_trace": [
                 {"biomarker": "ER/PR", "value": "Positive", "implication": "Strong endocrine sensitivity — chemotherapy de-escalation justified"},
-                {"biomarker": "Ki-67", "value": f"{ki67}%", "implication": f"{'Low' if ki67 < 14 else 'Borderline'} proliferation (<14%) — Luminal A phenotype confirmed"},
+                {"biomarker": "Ki-67", "value": f"{ki67}%", "implication": f"{'Low' if ki67 < 20 else 'Borderline'} proliferation (<20%) — Luminal A phenotype confirmed"},
                 {"biomarker": "HER2", "value": c.her2_status, "implication": "HER2 negative — anti-HER2 therapy not required"},
             ],
             "clinical_notes": "Chemotherapy omission is the standard for Luminal A per St. Gallen 2023 consensus. Endocrine therapy duration 5–10 years based on risk.",
@@ -605,11 +621,22 @@ def check_contraindications(c: ClinicalInput, protocols: list[dict]) -> list[dic
     return run_all_checks(c, protocols)
 
 
+from engine.risk_scores import calculate_all_scores
+
 # ─── MAIN PIPELINE ────────────────────────────────────────────────────────────
 def run_pipeline(c: ClinicalInput) -> PipelineResult:
     """
     Executes all 5 stages and returns a PipelineResult.
     """
+    validation_alerts = check_data_completeness(c)
+    
+    risk_scores = calculate_all_scores(
+        size_cm=c.tumour_size, 
+        nodes=c.lymph_node_count if c.lymph_nodes_involved else 0, 
+        grade=c.grade, 
+        age=c.patient_age if c.patient_age is not None else 50
+    )
+
     # Stage 1
     subtype, confidence, subtype_trace = classify_subtype(c)
 
@@ -637,6 +664,8 @@ def run_pipeline(c: ClinicalInput) -> PipelineResult:
         recommendations=protocols,
         alerts=alerts,
         rule_trace=full_trace,
+        risk_scores=risk_scores,
+        validation_alerts=validation_alerts,
     )
 
 

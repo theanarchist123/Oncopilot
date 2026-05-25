@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import React, { useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-    Brain, ShieldAlert, TrendingUp, Pill, ChevronRight, ChevronDown,
-    Activity, AlertCircle, CheckCircle2, ArrowLeft, Download,
-    Share2, Dna, HeartPulse, Info, Beaker, Microscope, FileText,
-    BookOpen, FlaskConical, Zap, Star, TriangleAlert
+import { 
+    Activity, ChevronLeft, HeartPulse, Dna, FileText, CheckCircle2,
+    Share2, Download, Check, AlertCircle, ShieldAlert,
+    Network, ArrowRight, X, FlaskConical, Stethoscope, Beaker, Pill, ChevronRight, ChevronDown,
+    Brain, TrendingUp, Info, Microscope, BookOpen, Zap, Star, TriangleAlert, Gauge, ArrowLeft
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAnalysisResultStore } from "@/store";
 import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 
 // ─── Colour config per subtype ────────────────────────────────────────────────
 const SUBTYPE_CFG: Record<string, { color: string; bg: string; border: string; glow: string; short: string }> = {
@@ -30,7 +32,7 @@ function ConfidenceRing({ value }: { value: number }) {
     const offset = circ - (pct / 100) * circ;
     const color = pct >= 80 ? "#059669" : pct >= 60 ? "#d97706" : "#e11d48";
     return (
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center group cursor-help">
             <svg className="rotate-[-90deg]" width="130" height="130">
                 <circle cx="65" cy="65" r={r} fill="none" stroke="#1e293b" strokeWidth="12" />
                 <motion.circle cx="65" cy="65" r={r} fill="none" stroke={color} strokeWidth="12"
@@ -39,9 +41,16 @@ function ConfidenceRing({ value }: { value: number }) {
                     transition={{ duration: 1.2, ease: "easeOut" }}
                 />
             </svg>
-            <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-bold font-mono text-white">{pct}%</span>
+            <div className="absolute flex flex-col items-center mt-1">
+                <div className="flex items-center gap-1 -ml-2">
+                    <span className="text-2xl font-bold font-mono text-white">{pct}%</span>
+                    <Info className="w-3 h-3 text-slate-500 -mt-2" />
+                </div>
                 <span className="text-xs text-slate-400">confidence</span>
+            </div>
+            {/* Tooltip */}
+            <div className="absolute bottom-full mb-2 w-64 p-3 bg-slate-800 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-center border border-slate-700">
+                Confidence based on NCCN Evidence Category 1 (uniform expert consensus across Phase III trials). Higher confidence indicates stronger guideline support, not outcome guarantee.
             </div>
         </div>
     );
@@ -229,8 +238,131 @@ function PathCard({ rec, rank, isExpanded, onToggle }: {
     );
 }
 
+const PrognosticScores = ({ scores }: { scores: any }) => {
+    if (!scores || (!scores.npi && !scores.cts5)) return null;
+
+    const renderGauge = (title: string, data: any, min: number, max: number) => {
+        if (!data) return null;
+        const pct = Math.min(Math.max((data.score - min) / (max - min), 0), 1);
+        const rotation = pct * 180;
+        let color = "#10b981"; // green
+        if (pct > 0.4) color = "#f59e0b"; // amber
+        if (pct > 0.7) color = "#ef4444"; // red
+
+        return (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center">
+                <h3 className="text-slate-300 font-semibold mb-6 flex items-center gap-2">
+                    <Gauge className="w-4 h-4 text-[#0891B2]" /> {title}
+                </h3>
+                <div className="relative w-48 h-24 overflow-hidden mb-6 flex justify-center mt-4">
+                    <svg viewBox="0 0 200 100" className="w-full h-full">
+                        <defs>
+                            <linearGradient id={`${title.replace(/\s+/g,'')}Grad`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#10b981" />
+                                <stop offset="50%" stopColor="#f59e0b" />
+                                <stop offset="100%" stopColor="#ef4444" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke={`url(#${title.replace(/\s+/g,'')}Grad)`} strokeWidth="20" strokeLinecap="round" />
+                        <motion.g 
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: rotation }}
+                            transition={{ duration: 1, delay: 0.5 }}
+                            style={{ transformOrigin: "100px 100px" }}
+                        >
+                            <path d="M 95 100 L 100 20 L 105 100 Z" fill="#fff" />
+                            <circle cx="100" cy="100" r="8" fill="#fff" />
+                        </motion.g>
+                    </svg>
+                    <div className="absolute bottom-0 text-3xl font-bold font-mono text-white bg-slate-900 border border-slate-800 rounded-xl px-4 py-1 translate-y-2">
+                        {data.score}
+                    </div>
+                </div>
+                <div className="mt-4 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border" style={{ borderColor: color, color: color, backgroundColor: `${color}1A` }}>
+                    {data.category}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="space-y-4">
+            <h2 className="font-semibold text-white">Prognostic Risk Scores</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+                {renderGauge("Nottingham Prognostic Index (NPI)", scores.npi, 2.0, 7.0)}
+                {renderGauge("CTS5 Risk Score", scores.cts5, 1.0, 6.0)}
+            </div>
+        </motion.div>
+    );
+};
+
+const DoctorFinalizationPanel = ({ caseId, recommendations }: { caseId: string | null, recommendations: any[] }) => {
+    const [decision, setDecision] = useState<string>("accept");
+    const [reason, setReason] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [finalized, setFinalized] = useState(false);
+
+    if (!caseId) return null; // Can't finalize if case is not saved
+    if (finalized) return (
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl flex items-center justify-center gap-3 text-emerald-400">
+            <CheckCircle2 className="w-6 h-6" />
+            <span className="font-bold">Treatment Plan Finalized Successfully</span>
+        </motion.div>
+    );
+
+    const submit = async () => {
+        setLoading(true);
+        try {
+            await api.finalizeCase(caseId, {
+                decision,
+                final_treatment_plan: decision === "override" ? {} : recommendations[0],
+                override_reason: reason
+            });
+            setFinalized(true);
+        } catch (e) {
+            console.error(e);
+        }
+        setLoading(false);
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="p-6 rounded-2xl bg-slate-900 border border-[#0891B2]/30 space-y-6 mt-8">
+            <h2 className="font-bold text-white flex items-center gap-2">
+                <Stethoscope className="w-5 h-5 text-[#0891B2]" /> Doctor Finalization
+            </h2>
+            <div className="flex flex-col md:flex-row gap-4">
+                <label className={`flex-1 p-4 rounded-xl border cursor-pointer transition-all ${decision === 'accept' ? 'bg-[#0891B2]/10 border-[#0891B2] text-[#0891B2]' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                    <input type="radio" name="decision" value="accept" checked={decision === 'accept'} onChange={() => setDecision('accept')} className="hidden" />
+                    <CheckCircle2 className="w-5 h-5 mb-2" />
+                    <div className="font-bold text-sm">Accept Primary Path</div>
+                </label>
+                <label className={`flex-1 p-4 rounded-xl border cursor-pointer transition-all ${decision === 'modify' ? 'bg-amber-500/10 border-amber-500 text-amber-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                    <input type="radio" name="decision" value="modify" checked={decision === 'modify'} onChange={() => setDecision('modify')} className="hidden" />
+                    <Activity className="w-5 h-5 mb-2" />
+                    <div className="font-bold text-sm">Accept with Modifications</div>
+                </label>
+                <label className={`flex-1 p-4 rounded-xl border cursor-pointer transition-all ${decision === 'override' ? 'bg-rose-500/10 border-rose-500 text-rose-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                    <input type="radio" name="decision" value="override" checked={decision === 'override'} onChange={() => setDecision('override')} className="hidden" />
+                    <X className="w-5 h-5 mb-2" />
+                    <div className="font-bold text-sm">Override Completely</div>
+                </label>
+            </div>
+            {decision !== 'accept' && (
+                <textarea 
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#0891B2] resize-none h-24"
+                    placeholder={`Provide clinical rationale for ${decision === 'modify' ? 'modifications' : 'override'}...`}
+                    value={reason} onChange={e => setReason(e.target.value)}
+                />
+            )}
+            <Button onClick={submit} disabled={loading || (decision !== 'accept' && !reason)} variant="teal" className="w-full h-12">
+                {loading ? "Finalizing..." : "Sign & Finalize Treatment Plan"}
+            </Button>
+        </motion.div>
+    );
+};
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-export default function ResultsPage() {
+function ResultsContent() {
     const router = useRouter();
     const result = useAnalysisResultStore((s) => s.result);
     const setResult = useAnalysisResultStore((s) => s.setResult);
@@ -260,7 +392,7 @@ export default function ResultsPage() {
         return <div className="p-20 text-center">Loading AI report...</div>;
     }
 
-    if (!result && !loadingAnalysis) {
+    if (!result) {
         return null;
     }
 
@@ -315,19 +447,19 @@ export default function ResultsPage() {
                     className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
-                            <Brain className="w-4 h-4 text-[#0891B2]" />
+                            <BookOpen className="w-4 h-4 text-[#0891B2]" />
                         </div>
-                        <h2 className="font-semibold text-white">AI Clinical Rationale</h2>
-                        <span className="ml-auto text-xs text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full">Ollama LLM</span>
+                        <h2 className="font-semibold text-white">Guideline-Based Rationale</h2>
+                        <span className="ml-auto text-xs text-[#0891B2] bg-[#0891B2]/10 border border-[#0891B2]/30 px-2 py-0.5 rounded-full font-mono">NCCN/ESMO Rules-Based</span>
                     </div>
                     <p className="text-slate-300 text-sm leading-relaxed">
                         {ai.subtype_rationale ?? "Classification based on NCCN/St. Gallen biomarker criteria."}
                     </p>
-                    {ai.key_biomarkers?.length > 0 && (
+                    {(ai.key_biomarkers?.length ?? 0) > 0 && (
                         <div>
                             <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Key Biomarkers</p>
                             <div className="flex flex-wrap gap-2">
-                                {ai.key_biomarkers.map((b: string, i: number) => (
+                                {ai.key_biomarkers?.map((b: string, i: number) => (
                                     <span key={i} className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg font-mono">{b}</span>
                                 ))}
                             </div>
@@ -357,6 +489,9 @@ export default function ResultsPage() {
                     )}
                 </motion.div>
             </div>
+
+            {/* ── Prognostic Scores ── */}
+            <PrognosticScores scores={result.risk_scores} />
 
             {/* ══ AI SIMULATION PANEL ══════════════════════════════════════════════ */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -422,25 +557,26 @@ export default function ResultsPage() {
                         </div>
                         <h2 className="font-semibold text-white">Safety Alerts</h2>
                         <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-mono ${
-                            result.alerts.length === 0
+                            result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0
                                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                 : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                         }`}>
-                            {result.alerts.length === 0 ? "✓ None" : `${result.alerts.length} alert${result.alerts.length > 1 ? "s" : ""}`}
+                            {result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0 ? "✓ None" : `${result.alerts.filter((a: any) => a.alert_type !== "DDI").length} alert${result.alerts.filter((a: any) => a.alert_type !== "DDI").length > 1 ? "s" : ""}`}
                         </span>
                     </div>
-                    {result.alerts.length === 0 ? (
+                    {result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0 ? (
                         <div className="flex items-center gap-3 text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-sm">
                             <CheckCircle2 className="w-5 h-5 shrink-0" />
                             No contraindications or safety alerts for this patient profile.
                         </div>
                     ) : (
-                        result.alerts.map((a, i) => (
+                        result.alerts.filter((a: any) => a.alert_type !== "DDI").map((a: any, i: number) => (
                             <div key={i} className="flex gap-3 p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl text-sm">
                                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                                 <div>
-                                    <p className="text-rose-400 font-medium">{a.contraindication_type ?? a.type ?? "Alert"}</p>
-                                    <p className="text-slate-400 mt-0.5">{a.reason ?? a.detail ?? ""}</p>
+                                    <p className="text-rose-400 font-medium">{a.alert_type}</p>
+                                    <p className="text-slate-300 font-medium mt-0.5">{a.trigger}</p>
+                                    <p className="text-slate-400 mt-1">{a.recommended_action}</p>
                                 </div>
                             </div>
                         ))
@@ -452,6 +588,34 @@ export default function ResultsPage() {
                         </div>
                     )}
                 </motion.div>
+
+                {/* Drug-Drug Interactions */}
+                {result.alerts.filter((a: any) => a.alert_type === "DDI").length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
+                        className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 md:col-span-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                                <Pill className="w-4 h-4 text-orange-400" />
+                            </div>
+                            <h2 className="font-semibold text-white">Drug-Drug Interactions (DDI)</h2>
+                            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-mono bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                {result.alerts.filter((a: any) => a.alert_type === "DDI").length} DDI{result.alerts.filter((a: any) => a.alert_type === "DDI").length > 1 ? "s" : ""}
+                            </span>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {result.alerts.filter((a: any) => a.alert_type === "DDI").map((a: any, i: number) => (
+                                <div key={i} className="flex gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-2 text-[10px] font-bold tracking-widest text-orange-500/50 uppercase">{a.severity}</div>
+                                    <Pill className="w-5 h-5 text-orange-400 shrink-0 mt-1" />
+                                    <div className="flex-1 pr-6">
+                                        <p className="text-orange-400 font-bold mb-1">{a.trigger}</p>
+                                        <div className="text-slate-300 leading-relaxed whitespace-pre-wrap">{a.recommended_action}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                     className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
@@ -472,15 +636,28 @@ export default function ResultsPage() {
                                     {r.value && <span className="text-xs font-mono text-[#0891B2] bg-[#0891B2]/10 px-1.5 py-0.5 rounded">{r.value}</span>}
                                 </div>
                                 <p className="text-xs text-slate-500 mt-0.5">{r.conclusion}</p>
+                                {r.label === "Ki-67" && parseFloat(r.value || "0") >= 15 && parseFloat(r.value || "0") <= 25 && (
+                                    <div className="mt-2 text-xs text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                                        ⚠️ Borderline Ki-67 — genomic assay (OncotypeDX/MammaPrint) recommended for confirmation
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
                 </motion.div>
             </div>
 
+            {/* Doctor Finalization */}
+            {result.case_id && <DoctorFinalizationPanel caseId={result.case_id} recommendations={recs} />}
+
             {/* Footer */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="flex flex-wrap gap-3 justify-end pt-4 border-t border-slate-800">
+                {result.case_id && (
+                    <Button variant="outline" onClick={() => window.open(`/patient?caseId=${result.case_id}`, '_blank')} className="border-slate-700 bg-slate-900 text-slate-300 gap-2 mr-auto">
+                        <Share2 className="w-4 h-4 text-[#0891B2]" /> Open Patient Portal
+                    </Button>
+                )}
                 <Button variant="outline" className="border-slate-700 bg-slate-900 text-slate-300 gap-2">
                     <Download className="w-4 h-4" /> Export PDF
                 </Button>
@@ -492,5 +669,13 @@ export default function ResultsPage() {
                 </Button>
             </motion.div>
         </div>
+    );
+}
+
+export default function AnalysisResultsPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+            <ResultsContent />
+        </Suspense>
     );
 }

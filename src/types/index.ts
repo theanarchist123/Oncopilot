@@ -24,6 +24,7 @@ export type CancerSubtype =
 
 export type CaseStatus =
   | "Under Analysis"
+  | "Treatment Decided"
   | "Treatment Ongoing"
   | "Pending Review"
   | "Completed"

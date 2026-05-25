@@ -4,7 +4,12 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from typing import Optional, Any
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from models.result import Result
 
 from core.database import get_db
 from api.deps import get_current_user
@@ -43,8 +48,8 @@ async def new_case(
 ):
     case = await create_case(db, current_user.id, body, request.client.host)
     await db.commit()
-    await db.refresh(case)
-    return SuccessResponse(data=CaseOut.model_validate(case), message="Case created")
+    full_case = await get_case(db, case.id, current_user.id)
+    return SuccessResponse(data=CaseOut.model_validate(full_case), message="Case created")
 
 
 @router.get("/{case_id}", response_model=SuccessResponse)
@@ -72,7 +77,8 @@ async def update_one(
         raise HTTPException(404, "Case not found")
     case = await update_case(db, case, body, current_user.id, request.client.host)
     await db.commit()
-    return SuccessResponse(data=CaseOut.model_validate(case), message="Case updated")
+    full_case = await get_case(db, case.id, current_user.id)
+    return SuccessResponse(data=CaseOut.model_validate(full_case), message="Case updated")
 
 
 @router.delete("/{case_id}", response_model=SuccessResponse)
@@ -101,6 +107,38 @@ async def case_history(
         raise HTTPException(404, "Case not found")
     versions = await get_case_history(db, case_id)
     return SuccessResponse(data=[{
-        "version": v.version, "molecular_subtype": v.molecular_subtype,
         "subtype_confidence": v.subtype_confidence, "created_at": v.created_at,
     } for v in versions])
+
+
+class FinalizeCaseRequest(BaseModel):
+    decision: str  # 'accept', 'modify', 'override'
+    final_treatment_plan: dict[str, Any]
+    override_reason: Optional[str] = None
+
+@router.post("/{case_id}/finalize", response_model=SuccessResponse)
+async def finalize_case(
+    case_id: uuid.UUID,
+    body: FinalizeCaseRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    case = await get_case(db, case_id, current_user.id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+        
+    # Get latest result
+    q = select(Result).where(Result.case_id == case_id, Result.is_simulation == False).order_by(Result.version.desc())
+    result = (await db.execute(q)).scalars().first()
+    if not result:
+        raise HTTPException(400, "No analysis result found for this case")
+        
+    result.doctor_decision = body.decision
+    result.final_treatment_plan = body.final_treatment_plan
+    result.override_reason = body.override_reason
+    
+    case.status = "treatment_decided"
+    
+    await db.commit()
+    return SuccessResponse(message="Treatment plan finalized successfully")
