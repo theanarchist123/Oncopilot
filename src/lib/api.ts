@@ -1,18 +1,8 @@
 import { ClinicalCase, User } from "@/types";
 
-const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+// Read from environment variable set in Vercel dashboard (or .env.local for local dev)
 const API_BASE_URL =
-  configuredApiBaseUrl &&
-  !configuredApiBaseUrl.includes("localhost:8000") &&
-  !configuredApiBaseUrl.includes("127.0.0.1:8000")
-    ? configuredApiBaseUrl
-    : "http://localhost:8001/api";
-const API_BASE_URLS = Array.from(
-  new Set([
-    API_BASE_URL,
-    API_BASE_URL.includes("localhost:8001") ? API_BASE_URL.replace("localhost:8001", "localhost:8081") : API_BASE_URL,
-  ])
-);
+  (process.env.NEXT_PUBLIC_API_URL || "").trim() || "http://localhost:8001/api";
 
 // ─── Auth token reader ────────────────────────────────────────────────────────
 // Reads from Zustand-persisted localStorage. Tries both 'token' and
@@ -45,34 +35,30 @@ const requestJson = async (
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  for (const baseUrl of API_BASE_URLS) {
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}${endpoint}`, {
-        ...options,
-        headers,
-      });
-    } catch (error) {
-      continue;
-    }
-
-    if (!response.ok) {
-      if (withAuth && response.status === 401 && typeof window !== "undefined") {
-        localStorage.removeItem("cancer-copilot-auth");
-        window.location.href = "/login";
-      }
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.detail || errorData?.error || `API error ${response.status}`
-      );
-    }
-
-    return response.json();
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    throw new Error(
+      `Cannot reach the API at ${API_BASE_URL}${endpoint}. Check that NEXT_PUBLIC_API_URL is set correctly.`
+    );
   }
 
-  throw new Error(
-    `Cannot reach the API at ${API_BASE_URL}${endpoint}. Make sure the backend is running on 8001 or 8081 and reachable.`
-  );
+  if (!response.ok) {
+    if (withAuth && response.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("cancer-copilot-auth");
+      window.location.href = "/login";
+    }
+    const errorData = await response.json().catch(() => null);
+    throw new Error(
+      errorData?.detail || errorData?.error || `API error ${response.status}`
+    );
+  }
+
+  return response.json();
 };
 
 // ─── Fetch wrapper ────────────────────────────────────────────────────────────
