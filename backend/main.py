@@ -49,17 +49,36 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS — allow all origins in production (Vercel), restrict in dev
-_origins = settings.origins_list
-if settings.app_env != "development":
-    _origins = ["*"]
+# CORS — explicit origins so Authorization header is allowed cross-origin.
+# Wildcard "*" blocks Authorization headers in browsers.
+_allowed_origins = [
+    # Frontend Vercel deployments
+    "https://capstone-app-delta.vercel.app",
+    "https://capstone-app.vercel.app",
+    # Allow all *.vercel.app preview deployments
+    "https://capstone-app-hqi3.vercel.app",
+    # Local dev
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:3003",
+    "http://127.0.0.1:3000",
+]
+
+# Also add any origins from config (dev overrides)
+for _o in settings.origins_list:
+    if _o not in _allowed_origins:
+        _allowed_origins.append(_o)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=_origins != ["*"],  # credentials forbidden with wildcard
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # all vercel preview URLs
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+    expose_headers=["Content-Type"],
+    max_age=600,
 )
 
 
