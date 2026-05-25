@@ -67,10 +67,25 @@ async def run_analysis(
     if not cd:
         raise HTTPException(400, "Submit clinical data before running analysis")
 
+    import asyncio
+    from engine.ai_reasoning import enhance_with_ai, enhance_pathways_with_ai
+    
     clinical_input = _clinical_to_input(cd)
     pipeline_result = run_pipeline(clinical_input)
 
+    # Concurrently enrich with NCCN/ESMO guideline explainability + Ollama AI narrative
+    enriched_paths, ai_reasoning = await asyncio.gather(
+        enhance_pathways_with_ai(clinical_input, pipeline_result.recommendations),
+        enhance_with_ai(clinical_input, pipeline_result),
+    )
+    
+    # Update pipeline result with enriched paths
+    pipeline_result.recommendations = enriched_paths
+    pipeline_result.ai_reasoning = ai_reasoning
+
     result = await save_result(db, case_id, pipeline_result, is_simulation=False, doctor_id=current_user.id)
+    # Ensure ai_reasoning is kept on the result object if save_result didn't save it
+    result.ai_reasoning = ai_reasoning
 
     # Update case status
     from schemas import CaseUpdate as CU
@@ -80,11 +95,15 @@ async def run_analysis(
 
     return SuccessResponse(
         data=AnalysisResult(
+            case_id=case_id,
             molecular_subtype=result.molecular_subtype,
             subtype_confidence=result.subtype_confidence,
             recommendations=result.recommendations,
             alerts=result.alerts,
             rule_trace=result.rule_trace,
+            validation_alerts=pipeline_result.validation_alerts,
+            risk_scores=pipeline_result.risk_scores,
+            ai_reasoning=result.ai_reasoning or {},
             version=result.version,
         ),
         message="Analysis complete",

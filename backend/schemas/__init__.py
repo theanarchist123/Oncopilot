@@ -142,11 +142,15 @@ class CaseOut(BaseModel):
 
 # ─── Analysis ────────────────────────────────────────────────────────────────
 class AnalysisResult(BaseModel):
+    case_id: uuid.UUID | None = None
     molecular_subtype: str
     subtype_confidence: float
     recommendations: list[dict[str, Any]]
     alerts: list[dict[str, Any]]
     rule_trace: list[dict[str, Any]]
+    validation_alerts: list[dict[str, Any]] = []
+    risk_scores: dict[str, Any] | None = None
+    ai_reasoning: dict[str, Any] | None = None
     version: int
 
 
