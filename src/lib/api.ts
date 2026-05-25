@@ -100,6 +100,7 @@ export const api = {
     method: "POST",
     body: JSON.stringify(data),
   }),
+  getTrials: (caseId: string) => fetchWithAuth(`/cases/${caseId}/trials`),
 
   // Clinical Data
   saveClinicalData: (caseId: string, data: any) =>

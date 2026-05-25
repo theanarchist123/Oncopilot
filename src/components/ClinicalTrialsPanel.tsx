@@ -13,20 +13,12 @@ export function ClinicalTrialsPanel({ caseId }: { caseId: string }) {
     useEffect(() => {
         if (!caseId) return;
         setLoading(true);
-        // We need to add getTrials to api.ts, or just fetch it here
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/cases/${caseId}/trials`, {
-            headers: {
-                "Authorization": `Bearer ${localStorage.getItem('token')}`
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
+        api.getTrials(caseId)
+            .then(data => {
                 setTrials(data.data || []);
-            }
-        })
-        .catch(err => console.error("Failed to fetch trials", err))
-        .finally(() => setLoading(false));
+            })
+            .catch(err => console.error("Failed to fetch trials", err))
+            .finally(() => setLoading(false));
     }, [caseId]);
 
     if (!caseId) return null;
