@@ -27,10 +27,10 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_
 # ─── Lifespan ────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Dev only: auto-create tables (use Alembic in production)
-    if settings.app_env == "development":
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Auto-migrate: add any missing columns + create missing tables.
+    # Safe to run on every cold start (all statements are idempotent).
+    from core.migrate import run_auto_migration
+    await run_auto_migration(engine)
     yield
     await engine.dispose()
 
