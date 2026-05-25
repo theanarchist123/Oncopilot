@@ -12,19 +12,16 @@ if _db_url.startswith("postgresql://") or _db_url.startswith("postgres://"):
 
 _is_postgres = _db_url.startswith("postgresql")
 
-_engine_kwargs = {"echo": settings.debug}
+_engine_kwargs: dict = {"echo": settings.debug}
 if _is_postgres:
-    _engine_kwargs.update(
-        {
-            "pool_size": 10,
-            "max_overflow": 20,
-            "pool_pre_ping": True,
-            "connect_args": {
-                "prepared_statement_cache_size": 0,
-                "statement_cache_size": 0,
-            },
-        }
-    )
+    # Vercel serverless: no persistent connection pool — use NullPool
+    # Each lambda invocation creates a fresh connection and closes it.
+    from sqlalchemy.pool import NullPool
+    _engine_kwargs["poolclass"] = NullPool
+    _engine_kwargs["connect_args"] = {
+        "prepared_statement_cache_size": 0,  # required for PgBouncer
+        "statement_cache_size": 0,
+    }
 
 engine = create_async_engine(_db_url, **_engine_kwargs)
 
