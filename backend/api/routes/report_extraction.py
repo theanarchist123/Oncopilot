@@ -73,7 +73,7 @@ async def extract_with_gemini(text: str) -> dict:
         raise ValueError("GEMINI_API_KEY not configured")
     
     # Run synchronously in an async wrapper or use async if supported
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    model = genai.GenerativeModel('gemini-3-flash')
     response = model.generate_content(get_llm_prompt(text))
     content = response.text
     

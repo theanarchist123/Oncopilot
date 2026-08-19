@@ -38,7 +38,7 @@ async def test_gemini():
         
         import google.generativeai as genai
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-3-flash')
         response = model.generate_content("Say hello")
         print(f"Gemini Response: {response.text}")
     except Exception as e:
