@@ -20,4 +20,4 @@ pytest
 pytest-asyncio
 pytest-cov
 anyio
-
+google-generativeai

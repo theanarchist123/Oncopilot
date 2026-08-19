@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { 
     Check, ChevronRight, UploadCloud, UserCircle2, ShieldAlert,
-    HeartPulse, ActivitySquare, Bone, Droplets, FlaskConical, Stethoscope, Save, Activity
+    HeartPulse, ActivitySquare, Bone, Droplets, FlaskConical, Stethoscope, Save, Activity, FileText, Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,10 +44,12 @@ const PillToggle = ({ options, value, onChange }: { options: string[], value: st
 export default function NewCaseForm() {
     const router = useRouter();
     const setAnalysisResult = useAnalysisResultStore((s) => s.setResult);
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadingStage, setLoadingStage] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadSuccess, setUploadSuccess] = useState(false);
 
     // Form State (simplified for UI demo)
     const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
@@ -61,7 +63,74 @@ export default function NewCaseForm() {
     });
 
     const handleNext = () => setStep(p => Math.min(5, p + 1));
-    const handlePrev = () => setStep(p => Math.max(1, p - 1));
+    const handlePrev = () => setStep(p => Math.max(0, p - 1));
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        setIsUploading(true);
+        setError(null);
+        try {
+            const res = await api.extractReport(file);
+            if (res.success && res.data) {
+                const data = res.data;
+                if (data.patient) {
+                    setPatient(p => ({
+                        ...p,
+                        name: data.patient.name || p.name,
+                        age: data.patient.age || p.age,
+                        sex: data.patient.sex || p.sex
+                    }));
+                }
+                if (data.tumour) {
+                    setTumour(t => ({
+                        ...t,
+                        stage: data.tumour.stage || t.stage,
+                        grade: data.tumour.grade || t.grade,
+                        size: data.tumour.size || t.size,
+                        nodes: data.tumour.lymph_nodes_involved ?? t.nodes,
+                        nodeCount: data.tumour.node_count || t.nodeCount
+                    }));
+                }
+                if (data.biomarkers) {
+                    setBiomarkers(b => ({
+                        ...b,
+                        er: data.biomarkers.er_status || b.er,
+                        pr: data.biomarkers.pr_status || b.pr,
+                        her2: data.biomarkers.her2_status || b.her2,
+                        ki67: data.biomarkers.ki67_percent || b.ki67,
+                        ki67Known: !!data.biomarkers.ki67_percent,
+                        brca1: data.biomarkers.brca1_status || b.brca1,
+                        brca2: data.biomarkers.brca2_status || b.brca2,
+                        tils: data.biomarkers.tils_percent || b.tils,
+                        oncotype: data.biomarkers.oncotype_dx_score || b.oncotype
+                    }));
+                }
+                if (data.health) {
+                    setHealth(h => ({
+                        ...h,
+                        lvef: data.health.lvef_percent || h.lvef,
+                        ecog: data.health.ecog_score || h.ecog,
+                        comorbidities: data.health.comorbidities || h.comorbidities,
+                        medications: data.health.medications || h.medications
+                    }));
+                }
+                setUploadSuccess(true);
+                setTimeout(() => {
+                    setUploadSuccess(false);
+                    setStep(1); // Proceed to step 1 after auto-filling
+                }, 2000);
+            } else {
+                setError(res.error || "Failed to extract report data.");
+            }
+        } catch (err: any) {
+            console.error("Upload error:", err);
+            setError(err.message || "An error occurred during upload.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -135,6 +204,51 @@ export default function NewCaseForm() {
     };
 
 
+
+    // ─── Step 0: Upload Report ────────────────────────────────────────────
+    const renderStep0 = () => (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <h2 className="text-3xl font-bold text-white mb-2">Upload Pathology Report</h2>
+            <p className="text-slate-400 max-w-lg mb-8">Upload a PDF or image of the patient's pathology report. Our AI will automatically extract clinical markers and pre-fill the case form.</p>
+            
+            <label className={cn(
+                "w-full max-w-xl h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group",
+                uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
+            )}>
+                <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess} />
+                
+                {isUploading ? (
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 border-4 border-[#0891B2] border-t-transparent rounded-full animate-spin mb-4" />
+                        <p className="text-[#0891B2] font-semibold text-lg">Extracting Data...</p>
+                        <p className="text-sm text-slate-500">Analyzing via OCR & Clinical AI</p>
+                    </div>
+                ) : uploadSuccess ? (
+                    <div className="flex flex-col items-center text-emerald-400">
+                        <CheckCircle2 className="w-16 h-16 mb-4" />
+                        <p className="font-semibold text-lg">Extraction Successful!</p>
+                        <p className="text-sm text-emerald-500/80">Auto-filling form fields...</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center text-slate-400 group-hover:text-[#0891B2] transition-colors">
+                        <UploadCloud className="w-16 h-16 mb-4" />
+                        <p className="font-semibold text-lg mb-2">Drag & Drop report here</p>
+                        <p className="text-sm text-slate-500">or click to browse files</p>
+                    </div>
+                )}
+            </label>
+
+            <div className="flex items-center gap-4 mt-8 w-full max-w-xl">
+                <div className="flex-1 h-px bg-slate-800" />
+                <span className="text-slate-500 text-sm font-medium">OR</span>
+                <div className="flex-1 h-px bg-slate-800" />
+            </div>
+
+            <Button variant="outline" className="mt-8 border-slate-700 bg-slate-900/50 text-slate-300" onClick={() => setStep(1)}>
+                Skip & Enter Manually
+            </Button>
+        </motion.div>
+    );
 
     // ─── Step 1: Patient ──────────────────────────────────────────────────
     const renderStep1 = () => (
@@ -607,9 +721,23 @@ export default function NewCaseForm() {
                ))}
            </div>
 
+           {/* Floating Upload Button (visible in steps 1-4) */}
+           <AnimatePresence>
+               {step > 0 && step < 5 && (
+                   <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-24 right-8 z-40 hidden lg:block">
+                       <label className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-[#0891B2] hover:bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full shadow-lg cursor-pointer transition-all">
+                           <Upload className="w-4 h-4 text-[#0891B2]" />
+                           <span className="text-sm font-medium">{isUploading ? 'Extracting...' : 'Upload Report to Auto-fill'}</span>
+                           <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} disabled={isUploading} />
+                       </label>
+                   </motion.div>
+               )}
+           </AnimatePresence>
+
            {/* Form Content Area */}
            <div className="flex-1">
                <AnimatePresence mode="wait">
+                   {step === 0 && <div key="step0">{renderStep0()}</div>}
                    {step === 1 && <div key="step1">{renderStep1()}</div>}
                    {step === 2 && <div key="step2">{renderStep2()}</div>}
                    {step === 3 && <div key="step3">{renderStep3()}</div>}
@@ -619,9 +747,9 @@ export default function NewCaseForm() {
            </div>
 
            {/* Bottom Navigation */}
-           {!isSubmitting && (
+           {!isSubmitting && step > 0 && (
                <div className="mt-12 pt-6 border-t border-slate-800 flex justify-between">
-                   <Button variant="outline" onClick={handlePrev} disabled={step === 1} className="w-32 border-slate-700 bg-slate-900 text-slate-300">
+                   <Button variant="outline" onClick={handlePrev} disabled={step === 0} className="w-32 border-slate-700 bg-slate-900 text-slate-300">
                        Back
                    </Button>
                    

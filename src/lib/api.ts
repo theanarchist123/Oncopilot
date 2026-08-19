@@ -137,4 +137,14 @@ export const api = {
 
   // Engine Rules
   getEngineRules: () => fetchWithAuth("/engine/rules"),
+
+  // Report extraction (OCR + LLM)
+  extractReport: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetch(`${API_BASE_URL}/reports/extract`, {
+      method: "POST",
+      body: formData,
+    }).then(res => res.json());
+  },
 };
