@@ -17,7 +17,7 @@ from core.database import engine, Base
 import models  # noqa: F401
 
 # Routes
-from api.routes import auth, cases, patient, clinical, analysis, instant_analysis, reports, pdf, analytics, notifications, second_opinion
+from api.routes import auth, cases, patient, clinical, analysis, instant_analysis, reports, pdf, analytics, notifications, second_opinion, report_extraction
 from api.routes import engine as engine_router
 
 # ─── Rate limiter ────────────────────────────────────────────────────────────
@@ -112,6 +112,7 @@ app.include_router(pdf.router)
 app.include_router(analytics.router)
 app.include_router(notifications.router)
 app.include_router(second_opinion.router)
+app.include_router(report_extraction.router)
 
 
 # ─── Health check — registered at both paths for compatibility ───────────────
