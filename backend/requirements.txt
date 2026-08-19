@@ -14,10 +14,8 @@ httpx
 spacy
 numpy
 pandas
-weasyprint
 slowapi
 pytest
 pytest-asyncio
 pytest-cov
 anyio
-google-generativeai
