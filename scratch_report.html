@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clinical Pathology & Molecular Oncology Report - Eleanor Vance</title>
+<style>
+  @page {
+    size: letter portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 20px;
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+  .header-table {
+    width: 100%;
+    border-bottom: 2px solid #0891b2;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+  .institution-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .institution-sub {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-container {
+    text-align: right;
+  }
+  .badge {
+    display: inline-block;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #334155;
+    margin-left: 4px;
+  }
+  .report-title-banner {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .report-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .report-status {
+    background: #0891b2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .patient-grid {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .grid-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .grid-table td {
+    padding: 3px 6px;
+    vertical-align: top;
+    font-size: 11px;
+  }
+  .label {
+    color: #64748b;
+    font-weight: 600;
+    width: 18%;
+  }
+  .val {
+    color: #0f172a;
+    font-weight: 700;
+    width: 32%;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-top: 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+  }
+  .section-title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 12px;
+    background: #0891b2;
+    margin-right: 6px;
+    border-radius: 2px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+  .data-table th {
+    background: #f1f5f9;
+    color: #334155;
+    text-align: left;
+    padding: 5px 8px;
+    font-weight: 700;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+  .data-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .highlight-pos {
+    color: #dc2626;
+    font-weight: 700;
+    background: #fef2f2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .highlight-neg {
+    color: #0891b2;
+    font-weight: 700;
+    background: #ecfeff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .highlight-num {
+    color: #0f172a;
+    font-weight: 700;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .diagnosis-box {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+  }
+  .diagnosis-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #166534;
+    margin-bottom: 4px;
+  }
+  .diagnosis-body {
+    color: #14532d;
+    font-weight: 600;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .footer-signatures {
+    margin-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .signature-box {
+    width: 48%;
+  }
+  .sig-name {
+    font-weight: 700;
+    font-size: 11px;
+    color: #0f172a;
+  }
+  .sig-title {
+    font-size: 10px;
+    color: #64748b;
+  }
+  .disclaimer {
+    margin-top: 14px;
+    font-size: 8.5px;
+    color: #94a3b8;
+    text-align: justify;
+    line-height: 1.3;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<table class="header-table">
+  <tr>
+    <td style="vertical-align: middle;">
+      <div class="institution-name">Memorial Oncology & Pathology Institute</div>
+      <div class="institution-sub">Department of Molecular Diagnostics & Clinical Histopathology</div>
+    </td>
+    <td class="badge-container" style="vertical-align: middle;">
+      <span class="badge">CAP ACCREDITED #7192834</span>
+      <span class="badge">CLIA ID: 36D0891234</span>
+      <span class="badge">NCCN GUIDELINE ALIGNED</span>
+    </td>
+  </tr>
+</table>
+
+<!-- Title Banner -->
+<div class="report-title-banner">
+  <span class="report-title">Surgical Pathology & Comprehensive Biomarker Report</span>
+  <span class="report-status">FINAL VERIFIED REPORT</span>
+</div>
+
+<!-- Patient Demographics Grid -->
+<div class="patient-grid">
+  <table class="grid-table">
+    <tr>
+      <td class="label">Patient Name:</td>
+      <td class="val">Eleanor Vance</td>
+      <td class="label">Medical Record (MRN):</td>
+      <td class="val">ONCO-2026-88421</td>
+    </tr>
+    <tr>
+      <td class="label">Age / Sex:</td>
+      <td class="val">52 Years / Female</td>
+      <td class="label">Date of Birth:</td>
+      <td class="val">14-Mar-1974</td>
+    </tr>
+    <tr>
+      <td class="label">Menopausal Status:</td>
+      <td class="val">Post-menopausal</td>
+      <td class="label">Accession Number:</td>
+      <td class="val">SP-2026-09412-B</td>
+    </tr>
+    <tr>
+      <td class="label">Referring Oncologist:</td>
+      <td class="val">Dr. Rajesh Mehta, MD</td>
+      <td class="label">Date of Collection:</td>
+      <td class="val">14-Aug-2026</td>
+    </tr>
+    <tr>
+      <td class="label">Specimen Source:</td>
+      <td class="val">Left Breast Core Biopsy & SLNB</td>
+      <td class="label">Report Verified Date:</td>
+      <td class="val">18-Aug-2026</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Final Histopathological Diagnosis -->
+<div class="diagnosis-box">
+  <div class="diagnosis-title">FINAL PATHOLOGICAL DIAGNOSIS</div>
+  <div class="diagnosis-body">
+    • <strong>Primary Tumor:</strong> Invasive Ductal Carcinoma (Infiltrating Ductal Carcinoma, NOS), Left Breast (Upper Outer Quadrant).<br>
+    • <strong>Tumour Size:</strong> 2.8 cm in greatest unidimensional diameter.<br>
+    • <strong>Histologic Grade:</strong> Nottingham Grade 2 (Moderately Differentiated) — Tubule Score 3, Nuclear Pleomorphism 2, Mitotic Count 2 (Total Score: 7/9).<br>
+    • <strong>Pathological Stage:</strong> Stage IIA (pT2 N0 M0, AJCC 8th Edition).<br>
+    • <strong>Lymph Node Status:</strong> 0 / 3 Sentinel Lymph Nodes Positive (No regional nodal metastasis detected; 0 involved nodes).<br>
+    • <strong>Lymphovascular Invasion (LVI):</strong> Not identified. Surgical margins: Negative (> 5mm clear).
+  </div>
+</div>
+
+<!-- Immunohistochemical Biomarkers Table -->
+<div class="section-title">IMMUNOHISTOCHEMISTRY (IHC) & CORE BIOMARKERS</div>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Biomarker / Assay</th>
+      <th>Status / Result</th>
+      <th>Quantification / Details</th>
+      <th>Clinical Interpretation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Estrogen Receptor (ER)</strong></td>
+      <td><span class="highlight-pos">Positive</span></td>
+      <td>90% tumor cell nuclei (Allred Score 8/8)</td>
+      <td>Strong Hormone Sensitivity</td>
+    </tr>
+    <tr>
+      <td><strong>Progesterone Receptor (PR)</strong></td>
+      <td><span class="highlight-pos">Positive</span></td>
+      <td>75% tumor cell nuclei (Allred Score 7/8)</td>
+      <td>Positive (Endocrine responsive)</td>
+    </tr>
+    <tr>
+      <td><strong>HER2 / neu Protein (IHC)</strong></td>
+      <td><span class="highlight-neg">Negative</span></td>
+      <td>Score 1+ (Incomplete membrane staining)</td>
+      <td>HER2 Negative (ASCO/CAP)</td>
+    </tr>
+    <tr>
+      <td><strong>HER2 Dual-ISH / FISH</strong></td>
+      <td><span class="highlight-neg">Negative</span></td>
+      <td>Ratio 1.18, Mean copy 2.3 signals/cell</td>
+      <td>Not Amplified (Confirms HER2-)</td>
+    </tr>
+    <tr>
+      <td><strong>Ki-67 Proliferation Index</strong></td>
+      <td><span class="highlight-num">14%</span></td>
+      <td>MIB-1 monoclonal antibody index</td>
+      <td>Low Proliferation (< 20% threshold)</td>
+    </tr>
+    <tr>
+      <td><strong>Tumour Infiltrating Lymphocytes (TILs)</strong></td>
+      <td><span class="highlight-num">15%</span></td>
+      <td>Stromal compartment evaluation</td>
+      <td>Moderate immune infiltration</td>
+    </tr>
+    <tr>
+      <td><strong>PD-L1 Expression (22C3)</strong></td>
+      <td><span class="highlight-neg">Negative</span></td>
+      <td>CPS < 1 (Combined Positive Score)</td>
+      <td>No PD-L1 overexpression</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Molecular & Genomic Profiling Table -->
+<div class="section-title">MOLECULAR GENETICS & MULTIGENE PROFILING</div>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Genomic Test</th>
+      <th>Result / Score</th>
+      <th>Risk Category</th>
+      <th>Therapeutic Implication</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Oncotype DX Recurrence Score</strong></td>
+      <td><span class="highlight-num">Score: 16</span></td>
+      <td>Low Risk (RS 0–25)</td>
+      <td>No significant chemotherapy benefit; endocrine therapy indicated.</td>
+    </tr>
+    <tr>
+      <td><strong>MammaPrint 70-Gene Profile</strong></td>
+      <td><span class="highlight-neg">Low Risk</span></td>
+      <td>Genomic Low Risk</td>
+      <td>Favorable prognosis; supports de-escalation of adjuvant chemotherapy.</td>
+    </tr>
+    <tr>
+      <td><strong>Germline BRCA1 Mutation</strong></td>
+      <td><span class="highlight-neg">Negative</span></td>
+      <td>Wild-Type (Not Detected)</td>
+      <td>No pathogenic germline BRCA1 variant detected.</td>
+    </tr>
+    <tr>
+      <td><strong>Germline BRCA2 Mutation</strong></td>
+      <td><span class="highlight-neg">Negative</span></td>
+      <td>Wild-Type (Not Detected)</td>
+      <td>No pathogenic germline BRCA2 variant detected.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Baseline Health & Safety Record -->
+<div class="section-title">PATIENT HEALTH, CARDIAC & SAFETY BASELINE</div>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Measurement</th>
+      <th>Safety Evaluation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Left Ventricular Ejection Fraction (LVEF)</strong></td>
+      <td><span class="highlight-num">62%</span></td>
+      <td>Normal cardiac function (baseline pre-treatment echocardiogram).</td>
+    </tr>
+    <tr>
+      <td><strong>ECOG Performance Status</strong></td>
+      <td><span class="highlight-num">Score: 0</span></td>
+      <td>Fully active, able to perform all daily activities without restriction.</td>
+    </tr>
+    <tr>
+      <td><strong>Comorbidities Recorded</strong></td>
+      <td>Essential Hypertension (Mild, well-controlled)</td>
+      <td>No renal, hepatic, or severe cardiovascular contraindications.</td>
+    </tr>
+    <tr>
+      <td><strong>Current Medications</strong></td>
+      <td>Amlodipine 5 mg OD, Multivitamin oral daily</td>
+      <td>No major antineoplastic drug interactions detected.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Molecular Subtype Classification Summary -->
+<div class="section-title">CLINICAL SUBTYPE INTEGRATION (ST. GALLEN / NCCN)</div>
+<p style="margin: 4px 0 10px 0; font-size: 11px; color: #334155;">
+  <strong>Molecular Subtype:</strong> <span style="font-weight: 800; color: #0891b2;">Luminal A-like (ER+ / PR+ / HER2- / Ki-67 14%)</span><br>
+  <strong>Algorithmic Confidence:</strong> 94% confidence based on concordant ER/PR positivity, validated HER2 negativity, and Ki-67 &lt; 20%.<br>
+  <strong>Primary Recommendation:</strong> Adjuvant Endocrine Therapy (Aromatase Inhibitor e.g., Letrozole or Anastrozole for 5–10 years). Adjuvant chemotherapy may be safely omitted based on Oncotype DX score of 16 (TAILORx trial criteria).
+</p>
+
+<!-- Signatures -->
+<table style="width: 100%; margin-top: 14px; border-top: 1.5px solid #cbd5e1; padding-top: 10px;">
+  <tr>
+    <td style="width: 50%;">
+      <div class="sig-name">Aris Thorne, MD, FCAP</div>
+      <div class="sig-title">Senior Consultant Surgical Pathologist<br>License # MD-66291-NY</div>
+    </td>
+    <td style="width: 50%; text-align: right;">
+      <div class="sig-name">Maya Lin, MD, PhD</div>
+      <div class="sig-title">Director of Molecular Pathology & Genomics<br>License # MD-78310-NY</div>
+    </td>
+  </tr>
+</table>
+
+<div class="disclaimer">
+  <strong>CONFIDENTIAL MEDICAL DOCUMENT:</strong> This report contains proprietary and protected health information (PHI) intended solely for the medical provider and oncology team. Generated and verified under CAP/CLIA quality control protocols. Prepared for clinical decision support in accordance with NCCN, ASCO/CAP, and ESMO clinical guidelines.
+</div>
+
+</body>
+</html>

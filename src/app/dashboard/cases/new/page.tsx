@@ -244,9 +244,19 @@ export default function NewCaseForm() {
                 <div className="flex-1 h-px bg-slate-800" />
             </div>
 
-            <Button variant="outline" className="mt-8 border-slate-700 bg-slate-900/50 text-slate-300" onClick={() => setStep(1)}>
-                Skip & Enter Manually
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
+                <Button variant="outline" className="border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-800 hover:text-white" onClick={() => setStep(1)}>
+                    Skip & Enter Manually
+                </Button>
+                <a
+                    href="/Sample_Pathology_Report_OncoPilot.pdf"
+                    download="Sample_Pathology_Report_OncoPilot.pdf"
+                    className="text-xs text-[#0891B2] hover:text-[#0891B2]/80 flex items-center gap-1.5 transition-colors underline underline-offset-4 font-medium"
+                >
+                    <FileText className="w-4 h-4" />
+                    Download Sample Pathology Report (PDF)
+                </a>
+            </div>
         </motion.div>
     );
 
