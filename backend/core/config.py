@@ -5,13 +5,13 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     # Database
-    database_url: str
-    supabase_url: str
-    supabase_key: str
+    database_url: str = "sqlite+aiosqlite:///./oncopilot.db"
+    supabase_url: str = "https://placeholder.supabase.co"
+    supabase_key: str = "placeholder-key"
     supabase_bucket: str = "case-reports"
 
     # JWT
-    secret_key: str
+    secret_key: str = "dev-secret-key-change-in-production-oncopilot-2026"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     debug: bool = False
     allowed_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005"
 
-    # AI
+    # AI & OCR
+    ocr_space_api_key: str = "K85368802888957"
+    gemini_api_key: str = ""
     ollama_api_key: str = ""
 
     # Rate limiting
