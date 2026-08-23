@@ -151,6 +151,9 @@ class AnalysisResult(BaseModel):
     validation_alerts: list[dict[str, Any]] = []
     risk_scores: dict[str, Any] | None = None
     ai_reasoning: dict[str, Any] | None = None
+    # ClinicalBERT embedding layer outputs
+    embedding_subtype_scores: dict[str, float] = {}
+    bert_confidence_contribution: float = 0.0
     version: int
 
 

@@ -1,0 +1,181 @@
+METROPOLITAN ONCOLOGY CENTER
+Department of Anatomic Pathology
+123 Medical Drive, New York, NY 10001
+Tel: (212) 555-0100 | Fax: (212) 555-0199
+
+================================================================================
+                         SURGICAL PATHOLOGY REPORT
+================================================================================
+
+Patient Name:   Jane Marie Doe
+Date of Birth:  15-Mar-1978
+Age:            46 years
+Sex:            Female
+MRN:            MRN-2024-089712
+Accession No:   SP-2024-14892
+Referring Physician: Dr. Robert Chen, MD
+Date Received:  10-Aug-2024
+Date Reported:  13-Aug-2024
+
+--------------------------------------------------------------------------------
+CLINICAL HISTORY:
+--------------------------------------------------------------------------------
+46-year-old female with a palpable right breast mass detected on routine mammogram.
+Family history of breast cancer (maternal aunt). No prior breast biopsies.
+No known drug allergies. Current medications: Metformin 500mg (for Type 2 Diabetes),
+Lisinopril 10mg (for Hypertension).
+
+--------------------------------------------------------------------------------
+SPECIMEN:
+--------------------------------------------------------------------------------
+Right breast, wide local excision with sentinel lymph node biopsy.
+
+Specimen Weight: 87g
+Specimen Dimensions: 9.0 x 6.5 x 4.2 cm
+
+--------------------------------------------------------------------------------
+GROSS DESCRIPTION:
+--------------------------------------------------------------------------------
+The specimen consists of a breast excision with an overlying skin ellipse.
+Serial sectioning reveals a firm, irregular, grey-white mass measuring 3.2 x 2.8 x 2.5 cm
+in the upper outer quadrant. The mass is located 0.4 cm from the deep margin,
+1.2 cm from the superior margin, and >2.0 cm from all other margins.
+Two sentinel lymph nodes are identified, measuring 1.5 cm and 0.8 cm respectively.
+
+--------------------------------------------------------------------------------
+MICROSCOPIC DESCRIPTION:
+--------------------------------------------------------------------------------
+Sections show an invasive carcinoma of no special type (NST), Grade 2.
+
+Tubule Formation:    Score 2 (>10% to ≤75% of tumour forms tubules)
+Nuclear Pleomorphism: Score 2 (moderate variation)
+Mitotic Count:       Score 2 (7 mitoses per 10 high power fields)
+Nottingham Grade:    2 (Total Score: 6) — Moderately differentiated
+
+The tumour demonstrates pushing margins with adjacent ductal carcinoma in situ
+(DCIS), intermediate nuclear grade, solid pattern.
+
+MARGINS:
+  Deep margin: involved (positive), tumour at ink
+  Superior margin: 1.2 cm clear
+  All other margins: >2.0 cm clear
+
+VASCULAR INVASION: Present (lymphovascular invasion identified)
+
+LYMPH NODES:
+  Sentinel Node 1 (1.5 cm): Metastatic carcinoma present — macrometastasis (2.0 mm deposit)
+  Sentinel Node 2 (0.8 cm): No metastatic carcinoma identified
+  Total: 1 of 2 sentinel nodes positive
+
+--------------------------------------------------------------------------------
+PATHOLOGICAL STAGING (AJCC 8th Edition):
+--------------------------------------------------------------------------------
+Primary Tumour (pT):    pT2 — Tumour >2 cm but ≤5 cm
+Regional Lymph Nodes:   pN1mi — Micrometastasis / Macrometastasis (>0.2mm and ≤2.0mm)
+Distant Metastasis:     pM0 — No clinical distant metastasis
+Overall Stage:          Stage IIB
+
+--------------------------------------------------------------------------------
+IMMUNOHISTOCHEMISTRY — BIOMARKER PANEL
+--------------------------------------------------------------------------------
+Performed at: Metropolitan Oncology Center, Immunohistochemistry Laboratory
+Internal Controls: Satisfactory
+
+OESTROGEN RECEPTOR (ER):
+  Result:        POSITIVE
+  % Positive:    85%
+  Intensity:     Strong (3+)
+  Allred Score:  7/8
+  Interpretation: ER POSITIVE
+
+PROGESTERONE RECEPTOR (PR):
+  Result:        POSITIVE
+  % Positive:    60%
+  Intensity:     Moderate (2+)
+  Allred Score:  6/8
+  Interpretation: PR POSITIVE
+
+HER2 (Human Epidermal Growth Factor Receptor 2) — IHC:
+  Result:        NEGATIVE (1+)
+  Staining:      Incomplete faint membrane staining
+  Interpretation: HER2 NEGATIVE (no reflex ISH required)
+
+Ki-67 PROLIFERATION INDEX:
+  Result:        22%
+  Interpretation: Intermediate proliferative activity
+
+BRCA1 EXPRESSION:
+  Result:        Intact nuclear expression (NOT MUTATED / NEGATIVE)
+
+BRCA2 EXPRESSION:
+  Result:        Intact nuclear expression (NOT MUTATED / NEGATIVE)
+
+TUMOUR-INFILTRATING LYMPHOCYTES (TILs):
+  Result:        15% stromal TILs
+
+ONCOTYPE DX RECURRENCE SCORE (ordered separately):
+  Score:         21
+  Risk Category: Intermediate Risk
+
+--------------------------------------------------------------------------------
+ECOG PERFORMANCE STATUS (from clinical notes):
+--------------------------------------------------------------------------------
+ECOG Score: 1 — Restricted in physically strenuous activity but ambulatory and
+             able to carry out work of a light or sedentary nature.
+
+CARDIAC ASSESSMENT (from pre-operative workup):
+LVEF (Left Ventricular Ejection Fraction): 62% — Normal systolic function
+
+--------------------------------------------------------------------------------
+COMORBIDITIES (from clinical record):
+--------------------------------------------------------------------------------
+1. Type 2 Diabetes Mellitus (well-controlled on Metformin)
+2. Hypertension (controlled on Lisinopril)
+
+--------------------------------------------------------------------------------
+DIAGNOSIS:
+--------------------------------------------------------------------------------
+RIGHT BREAST, WIDE LOCAL EXCISION AND SENTINEL LYMPH NODE BIOPSY:
+
+1. INVASIVE CARCINOMA OF NO SPECIAL TYPE (NST), Grade 2
+   - Tumour size: 3.2 cm (greatest dimension)
+   - Nottingham Grade 2/3 (score 6)
+   - pT2 pN1 pM0 — Stage IIB (AJCC 8th edition)
+   - Positive deep margin
+   - Lymphovascular invasion: Present
+   - 1 of 2 sentinel lymph nodes involved
+
+2. BIOMARKER SUMMARY:
+   ER:          Positive (85%, Allred 7/8)
+   PR:          Positive (60%, Allred 6/8)
+   HER2:        Negative (IHC 1+)
+   Ki-67:       22%
+   BRCA1:       Negative (intact expression)
+   BRCA2:       Negative (intact expression)
+   TILs:        15%
+   Oncotype DX: 21 (Intermediate Risk)
+
+3. ADJACENT DCIS: Intermediate grade, solid pattern
+
+--------------------------------------------------------------------------------
+COMMENT:
+--------------------------------------------------------------------------------
+This is a moderately differentiated ER+/PR+/HER2- invasive breast carcinoma
+(Luminal B subtype). The intermediate Oncotype DX score of 21 and Ki-67 of 22%
+suggest intermediate proliferative activity. Positive deep margin warrants
+discussion of re-excision or targeted radiotherapy boost. Lymphovascular invasion
+and sentinel node involvement (1/2) indicate upstaging to pN1.
+
+Multidisciplinary team discussion is recommended to determine the role of
+adjuvant chemotherapy given the intermediate Oncotype DX score and nodal
+involvement.
+
+--------------------------------------------------------------------------------
+Electronically signed by:
+Dr. Sarah M. Thompson, MBBS, FRCPath
+Consultant Histopathologist
+Metropolitan Oncology Center
+Signed: 13-Aug-2024 at 16:42
+================================================================================
+This report is CONFIDENTIAL. For authorized medical personnel only.
+================================================================================

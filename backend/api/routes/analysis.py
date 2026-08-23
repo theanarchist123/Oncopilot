@@ -104,6 +104,8 @@ async def run_analysis(
             validation_alerts=pipeline_result.validation_alerts,
             risk_scores=pipeline_result.risk_scores,
             ai_reasoning=result.ai_reasoning or {},
+            embedding_subtype_scores=pipeline_result.embedding_subtype_scores,
+            bert_confidence_contribution=pipeline_result.bert_confidence_contribution,
             version=result.version,
         ),
         message="Analysis complete",

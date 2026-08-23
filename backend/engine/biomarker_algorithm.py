@@ -78,6 +78,9 @@ class PipelineResult:
     rule_trace: list[dict]
     risk_scores: dict | None = None
     validation_alerts: list[dict] = field(default_factory=list)
+    # ClinicalBERT embedding layer outputs
+    embedding_subtype_scores: dict = field(default_factory=dict)
+    bert_confidence_contribution: float = 0.0
 
 
 def check_data_completeness(c: ClinicalInput) -> list[dict]:
@@ -627,18 +630,38 @@ from engine.risk_scores import calculate_all_scores
 def run_pipeline(c: ClinicalInput) -> PipelineResult:
     """
     Executes all 5 stages and returns a PipelineResult.
+    Stage 1 confidence is enriched by ClinicalBERT cosine similarity scoring
+    against subtype prototype embeddings (graceful no-op if BERT unavailable).
     """
     validation_alerts = check_data_completeness(c)
-    
+
     risk_scores = calculate_all_scores(
-        size_cm=c.tumour_size, 
-        nodes=c.lymph_node_count if c.lymph_nodes_involved else 0, 
-        grade=c.grade, 
+        size_cm=c.tumour_size,
+        nodes=c.lymph_node_count if c.lymph_nodes_involved else 0,
+        grade=c.grade,
         age=c.patient_age if c.patient_age is not None else 50
     )
 
-    # Stage 1
-    subtype, confidence, subtype_trace = classify_subtype(c)
+    # Stage 1 — rule-based subtype classification
+    subtype, rule_confidence, subtype_trace = classify_subtype(c)
+
+    # ── ClinicalBERT embedding layer ──────────────────────────────────────────
+    # Build a structured clinical text summary from the input dataclass,
+    # encode it with Bio_ClinicalBERT, and compare against pre-encoded
+    # subtype prototype embeddings via cosine similarity.
+    # The resulting BERT similarity is fused (30% BERT / 70% rules) with the
+    # rule-engine confidence to produce the final subtype_confidence score.
+    from engine.clinical_bert import (
+        build_clinical_text,
+        score_against_subtypes,
+        fuse_confidence,
+    )
+    clinical_text = build_clinical_text(c)
+    bert_scores = score_against_subtypes(clinical_text)
+    fused_confidence, bert_contribution = fuse_confidence(
+        rule_confidence, bert_scores, subtype
+    )
+    # ─────────────────────────────────────────────────────────────────────────
 
     # Stage 2
     genomic_mods = genomic_risk_modifiers(c)
@@ -660,12 +683,14 @@ def run_pipeline(c: ClinicalInput) -> PipelineResult:
 
     return PipelineResult(
         molecular_subtype=subtype,
-        subtype_confidence=round(confidence, 3),
+        subtype_confidence=fused_confidence,
         recommendations=protocols,
         alerts=alerts,
         rule_trace=full_trace,
         risk_scores=risk_scores,
         validation_alerts=validation_alerts,
+        embedding_subtype_scores=bert_scores,
+        bert_confidence_contribution=bert_contribution,
     )
 
 

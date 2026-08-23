@@ -42,6 +42,9 @@ class InstantAnalysisResponse(BaseModel):
     validation_alerts: list[dict[str, Any]] = []
     risk_scores: Optional[dict[str, Any]] = None
     ai_reasoning: dict[str, Any]
+    # ClinicalBERT embedding layer outputs
+    embedding_subtype_scores: dict[str, float] = {}
+    bert_confidence_contribution: float = 0.0
     patient_name: Optional[str] = None
     patient_age: Optional[int] = None
     case_id: Optional[uuid.UUID] = None
@@ -157,6 +160,8 @@ async def instant_analysis(
         validation_alerts=pipeline_result.validation_alerts,
         risk_scores=pipeline_result.risk_scores,
         ai_reasoning=ai_reasoning,
+        embedding_subtype_scores=pipeline_result.embedding_subtype_scores,
+        bert_confidence_contribution=pipeline_result.bert_confidence_contribution,
         patient_name=body.patient_name,
         patient_age=body.patient_age,
         case_id=case_id_out,
