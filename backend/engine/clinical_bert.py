@@ -21,11 +21,16 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ─── Model config ─────────────────────────────────────────────────────────────
+# ─── Model config ───────────────────────────────────────────────────────────────
 _MODEL_NAME = os.getenv("CLINICALBERT_MODEL", "emilyalsentzer/Bio_ClinicalBERT")
-_BERT_WEIGHT = float(os.getenv("CLINICALBERT_WEIGHT", "0.30"))  # 30% BERT, 70% rules
+_BERT_WEIGHT = float(os.getenv("CLINICALBERT_WEIGHT", "0.30"))
 
-# ─── Lazy-loaded globals ───────────────────────────────────────────────────────
+# Primary: HuggingFace Inference API — just an HTTP call, no local PyTorch needed.
+# Get a free token at https://huggingface.co/settings/tokens and set HF_API_TOKEN.
+_HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
+_HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{_MODEL_NAME}"
+
+# ─── Lazy-loaded globals ───────────────────────────────────────────────────────────────
 _tokenizer = None
 _model = None
 _prototype_embeddings: dict[str, np.ndarray] = {}
@@ -74,7 +79,34 @@ _SUBTYPE_PROTOTYPES: dict[str, str] = {
 }
 
 
-# ─── Model loading ─────────────────────────────────────────────────────────────
+# ─── Model loading ───────────────────────────────────────────────────────────────
+
+def _encode_via_hf_api(text: str) -> np.ndarray | None:
+    """
+    Call HuggingFace Inference API to get a 768-dim embedding.
+    No local model weights needed — just an HTTP call.
+    """
+    if not _HF_API_TOKEN:
+        return None
+    try:
+        import httpx
+        headers = {"Authorization": f"Bearer {_HF_API_TOKEN}"}
+        payload = {"inputs": text, "options": {"wait_for_model": True}}
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(_HF_API_URL, headers=headers, json=payload)
+        if response.status_code != 200:
+            logger.warning(f"[ClinicalBERT HF API] status {response.status_code}: {response.text[:200]}")
+            return None
+        arr = np.array(response.json(), dtype=np.float32)
+        if arr.ndim == 3:
+            arr = arr[0]          # drop batch dim
+        if arr.ndim == 2:
+            arr = arr.mean(axis=0)  # mean-pool tokens
+        return arr
+    except Exception as exc:
+        logger.warning(f"[ClinicalBERT HF API] call failed: {exc}")
+        return None
+
 
 def _load_model() -> bool:
     """
@@ -121,8 +153,17 @@ def _mean_pool(token_embeddings: "torch.Tensor", attention_mask: "torch.Tensor")
 def encode(text: str) -> np.ndarray | None:
     """
     Encode a clinical text string into a 768-dim embedding vector.
-    Returns None if ClinicalBERT is unavailable.
+    Tries HuggingFace Inference API first (no memory overhead),
+    then falls back to local transformers+torch.
+    Returns None if neither backend is available.
     """
+    # Primary: HF hosted API
+    if _HF_API_TOKEN:
+        vec = _encode_via_hf_api(text)
+        if vec is not None:
+            return vec
+
+    # Fallback: local model (requires transformers + torch installed)
     if not _load_model():
         return None
 
