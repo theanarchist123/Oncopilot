@@ -10,7 +10,7 @@ import json
 import httpx
 from .biomarker_algorithm import PipelineResult, ClinicalInput
 
-OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "3eeb9d3cc3464bd9bdaa4ca5131b1d02.6C54tCVm4GBCs42Al7vnC2iJ")
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
 OLLAMA_BASE_URL = "https://ollama.com/api"
 OLLAMA_MODEL = "llama3.1:70b"  # Best for clinical reasoning on Ollama cloud
 
