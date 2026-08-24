@@ -1,0 +1,644 @@
+ 
+ 
+Vivekanand Education Society's Institute of  Technology 
+                                              
+ 
+      
+ Department of Information Technology   
+                                                                                           Group No.: 9 
+                                                                           Date :- 5th March 2026 
+Capstone Project - I Synopsis (2025-26) - Sem VI  
+Domain:- Application and Platform Development 
+SDG 3- Good Heath and Well being 
+Title of the Project: Explainable Rule-Based Clinical Decision 
+Support System for Breast Cancer Using NLP 
+                                                         
+Name of The Mentor :- Dr. Asma Parveen I Siddavatam 
+Co-Mentor: Mrs. Pradnya Karekar 
+Assistant Professor, Department of Information Technology 
+ 
+                       
+                                  
+1 
+ Nikhil 
+Kadam  
+ 
+2023.nikhil.kadam@ves.ac
+.in 
+Khushi 
+Shukla 
+ 
+2023.khushi.shukla@ves.a
+c.in 
+ 
+       Shravanya   
+        Andhale 
+ 
+2023.shravanya.andhale@ves
+.ac.in 
+ Sanket 
+Patil 
+ 
+2023.sanket.patil@ves.a
+c.in 
+ 
+                                 INDEX 
+ 
+ 
+Sr. No. 
+                                           Title 
+Pg No. 
+1 
+Abstract 
+3 
+2 
+Introduction 
+4-5 
+3 
+Problem Statement 
+6 
+4 
+Proposed Solution 
+7-8 
+5 
+Methodology / Block Diagram 
+9-12 
+6 
+Hardware, Software and Tools Requirements 
+13 
+7 
+Proposed Evaluation Measures 
+14 
+8 
+Conclusion 
+15 
+9 
+References 
+16-17 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+2 
+ 
+ABSTRACT 
+Breast cancer is among the most prevalent malignancies affecting women worldwide and 
+represents a significant healthcare burden. Effective treatment planning requires oncologists to 
+analyze multiple clinical parameters, including tumor characteristics, molecular biomarkers, 
+staging information, lymph node involvement, and patient comorbidities. However, these 
+critical data points are often distributed across multiple diagnostic documents such as 
+histopathology reports, immunohistochemistry (IHC) panels, radiology findings, and 
+laboratory tests. This fragmentation of clinical information increases the complexity of 
+decision-making and places a substantial cognitive burden on healthcare professionals. 
+As oncology treatment pathways become increasingly complex and personalized, there is a 
+growing need for intelligent systems that can consolidate patient data and support clinicians in 
+aligning treatment decisions with established medical guidelines. Clinical Decision Support 
+Systems (CDSS) have been developed to address this need by analyzing patient information and 
+generating evidence-based recommendations. However, many existing CDSS platforms face 
+key limitations, including limited transparency, high implementation costs, and reliance on 
+opaque machine learning models that do not provide clear reasoning for their outputs. The lack 
+of explainability in such systems reduces clinician trust and limits their adoption in real-world 
+clinical settings. 
+To address these challenges, this project proposes an AI-Assisted Clinical Decision Support 
+System for Breast Cancer Treatment Planning that emphasizes explainable and 
+guideline-driven decision making. The system integrates Natural Language Processing 
+(NLP) techniques with a transparent rule-based clinical reasoning engine derived from 
+internationally recognized oncology guidelines, including NCCN, ESMO, ASCO, and ISMPO. 
+It automatically extracts clinically relevant information from diagnostic reports, transforms it 
+into structured patient profiles, and evaluates the data using explicit IF–THEN clinical rules. 
+Each recommendation is accompanied by a clear explanation linking the decision to specific 
+clinical parameters and guideline references, ensuring full traceability and interpretability. 
+To further enhance safety and reliability, the system incorporates a clinical data validation 
+module that flags missing or uncertain information for clinician review before generating 
+recommendations. In addition, a contraindication detection module evaluates potential 
+treatment risks based on patient comorbidities and therapy-specific toxicity considerations. 
+The final treatment pathways are presented through a doctor dashboard, where clinicians can 
+review the structured data, inspect the reasoning behind each recommendation, and modify or 
+override system outputs, thereby maintaining full clinical control. 
+Given the sensitive nature of healthcare data, the system is designed with strong security and 
+privacy safeguards, including encrypted data storage and transmission, role-based access control 
+(RBAC), audit logging, and privacy-by-design principles aligned with HIPAA standards. By 
+combining automated data extraction, explainable clinical reasoning, and secure system 
+architecture, the proposed solution aims to improve the efficiency, transparency, and reliability of 
+breast cancer treatment planning while reinforcing clinician trust and preserving human oversight 
+in the decision-making process. 
+ 
+ 
+3 
+ 
+INTRODUCTION 
+Breast cancer represents one of the most significant public health challenges globally and is the 
+most common cancer among women in India, accounting for approximately 27–30% of all 
+female cancers. Recent estimates indicate that 1 in 28 women in India is likely to develop 
+breast cancer during her lifetime, with higher incidence observed in urban populations. This 
+rising burden underscores the need for efficient, accurate, and scalable approaches to treatment 
+planning within the Indian healthcare context. 
+Advances in oncology research have established that breast cancer is not a single disease but a 
+heterogeneous group of malignancies characterized by diverse molecular and biological 
+profiles. These variations significantly influence tumor behavior, treatment response, and 
+patient prognosis, making precision medicine central to modern breast cancer management. 
+Treatment strategies are therefore increasingly tailored based on the unique clinical and 
+molecular characteristics of each patient. 
+A critical component of this personalized approach is the analysis of molecular biomarkers, 
+typically obtained through immunohistochemistry (IHC) testing. The most clinically relevant 
+biomarkers include Estrogen Receptor (ER), Progesterone Receptor (PR), Human 
+Epidermal Growth Factor Receptor 2 (HER2), and the Ki-67 proliferation index. ER and PR 
+determine hormone sensitivity, HER2 indicates tumor aggressiveness and eligibility for 
+targeted therapy, and Ki-67 reflects tumor proliferation rate. While additional biomarkers 
+such as p53 mutations, BRCA1/2 genetic markers, and genomic assay scores (e.g., Oncotype 
+DX) are used in advanced settings, this project focuses on ER, PR, HER2, and Ki-67 due to 
+their widespread availability, standardization, and routine use in Indian clinical practice. 
+This ensures that the proposed system remains practical and applicable in real-world 
+healthcare settings, particularly in resource-constrained environments. 
+These biomarkers are used to classify tumors into molecular subtypes such as Luminal A, 
+Luminal B, HER2-enriched, and Triple-Negative Breast Cancer (TNBC), each associated 
+with distinct biological characteristics and treatment pathways. In parallel, oncologists evaluate 
+the Tumor-Node-Metastasis (TNM) staging system, which incorporates tumor size, lymph 
+node involvement, and distant metastasis. Among these, lymph node status is a critical 
+prognostic factor, as it indicates whether cancer has spread beyond the primary tumor. The 
+number and extent of affected lymph nodes directly influence disease stage, recurrence risk, 
+and treatment decisions, including the need for chemotherapy, radiation therapy, and 
+surgical intervention such as axillary lymph node dissection. 
+Despite advances in diagnostic technologies, a major challenge in oncology practice remains the 
+fragmentation of clinical data. Patient information relevant to treatment planning is often 
+distributed across multiple reports generated by different diagnostic departments. Pathology 
+reports, imaging studies, biomarker test results, and laboratory findings are frequently 
+stored in separate systems, requiring clinicians to manually review and synthesize information 
+before making treatment decisions. This process is time-consuming and increases the risk of 
+overlooking critical clinical details. 
+To address these challenges, Clinical Decision Support Systems (CDSS) have been developed 
+to assist clinicians in analyzing patient data and recommending guideline-based treatment 
+options. CDSS platforms compare patient information against a structured knowledge base of 
+clinical guidelines and decision rules, enabling more efficient and consistent treatment planning. 
+4 
+ 
+However, many existing oncology CDSS platforms rely heavily on black-box machine learning 
+models, which lack transparency and explainability, thereby reducing clinician trust. 
+Additionally, such systems often require significant infrastructure and financial investment, 
+limiting their adoption in many Indian healthcare settings. 
+The AI-Assisted Clinical Decision Support System proposed in this project addresses these 
+limitations by emphasizing explainability, transparency, and accessibility within the Indian 
+clinical context. Instead of relying on opaque machine learning models, the system employs a 
+rule-based decision engine derived from established oncology guidelines, ensuring that every 
+recommendation is traceable to specific clinical parameters and guideline logic. Furthermore, 
+the system integrates Natural Language Processing (NLP) techniques to extract structured 
+clinical information from unstructured diagnostic reports, reducing manual effort and improving 
+efficiency. 
+This project specifically focuses on the Indian demographic, where variations in genetic 
+factors, healthcare access, diagnostic practices, and treatment protocols influence clinical 
+decision-making. Consequently, the system is designed using guideline adaptations and clinical 
+practices relevant to India, and its outputs are not intended to be directly generalized to other 
+populations without appropriate validation. By integrating automated data extraction, 
+explainable reasoning, clinician oversight, and secure data management, the proposed 
+system aims to support oncologists in delivering efficient, accurate, and patient-centered 
+breast cancer care. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+5 
+ 
+PROBLEM STATEMENT 
+Breast cancer treatment planning is a complex clinical process that requires the integration of 
+multiple diagnostic parameters derived from diverse sources of medical information. Oncologists 
+must analyze pathology reports, immunohistochemistry results, radiology findings, staging 
+information, lymph node status, and patient health history before determining an appropriate 
+treatment strategy. The increasing complexity of modern oncology diagnostics has made this 
+decision-making process highly data-intensive and cognitively demanding. 
+A key challenge in breast cancer management is the fragmentation of patient data across 
+multiple diagnostic documents. Clinical information such as tumor characteristics, 
+biomarker status (ER, PR, HER2, Ki-67), lymph node involvement, and staging details is 
+often distributed across separate reports generated by different departments. Clinicians are 
+required to manually consolidate this information to construct a comprehensive clinical profile, 
+which can be both time-consuming and error-prone. 
+The manual interpretation of clinical reports introduces the risk of overlooking critical 
+indicators, particularly in high-volume healthcare settings. For instance, misinterpretation or 
+omission of HER2 status, Ki-67 index, or lymph node involvement can significantly impact 
+treatment decisions. Lymph node involvement, in particular, is a crucial determinant of disease 
+progression and treatment intensity, as it directly influences cancer staging, recurrence risk, 
+and the need for systemic therapies such as chemotherapy and radiation. 
+Another significant challenge is the rapid evolution of clinical oncology guidelines. 
+Organizations such as NCCN, ESMO, and ASCO frequently update their treatment 
+recommendations based on emerging clinical evidence. Keeping up with these updates requires 
+continuous effort from clinicians, particularly in resource-constrained and high-patient-load 
+environments such as those commonly found in India.Additionally patients often face difficulty 
+understanding their diagnosis and treatment plans. Breast cancer treatment typically involves 
+multiple stages, including surgery, che​
+motherapy, radiation therapy, targeted therapy, 
+and endocrine therapy. The use of complex medical terminology in clinical reports can lead to 
+confusion, anxiety, and reduced patient engagement. 
+Furthermore, the security and privacy of patient data is a critical concern. Healthcare systems 
+must ensure that sensitive medical information is protected against unauthorized access, data 
+breaches, and misuse. Any system designed to support clinical decision-making must therefore 
+incorporate robust security mechanisms, including encryption, authentication, and 
+role-based access control.Despite the availability of CDSS tools, there remains a lack of 
+accessible, explainable, and context-aware systems tailored to the Indian healthcare 
+environment. Existing systems often lack transparency, integration with clinical workflows, 
+and adaptability to region-specific practices, limiting their effectiveness in real-world 
+deployment. 
+Therefore, the problem addressed in this project is the absence of a transparent, explainable, 
+and secure clinical decision support system capable of integrating fragmented diagnostic data, 
+incorporating biomarker-driven and lymph node–based clinical reasoning, and supporting 
+oncologists in planning breast cancer treatment pathways. The proposed solution aims to address 
+this gap by combining automated data extraction, explainable rule-based reasoning, clinical 
+validation mechanisms, and strong data privacy protections within a unified platform 
+designed for practical use in the Indian healthcare context. 
+6 
+ 
+PROPOSED SOLUTION  
+The proposed solution is an AI-Assisted Clinical Decision Support System (CDSS) designed to 
+support oncologists in planning treatment pathways for breast cancer patients. The system 
+focuses on converting unstructured clinical reports into structured medical data and applying 
+guideline-based reasoning to generate treatment recommendations that are transparent, 
+explainable, and clinically safe. 
+At the core of the system is an automated data extraction pipeline powered by Natural 
+Language Processing (NLP). Diagnostic reports such as pathology reports, other test results, 
+and staging summaries are uploaded into the system. These documents often contain large 
+volumes of unstructured text describing tumor characteristics, receptor status, and other 
+diagnostic findings. The NLP pipeline processes these reports to identify and extract key clinical 
+indicators such as tumor size, lymph node involvement, ER status, PR status, HER2 
+expression, Ki-67 proliferation index, and disease stage. 
+The extracted information is converted into a structured patient profile, which represents the 
+patient’s oncological characteristics in a standardized format. Structured data enables the system 
+to perform computational reasoning and evaluate treatment rules efficiently. 
+To ensure clinical safety, the system incorporates a Clinical Data Validation Module. This 
+module verifies whether essential fields required for treatment planning are present. For example, 
+biomarker information such as HER2 status or lymph node count is critical for determining 
+treatment pathways. If any required field is missing or ambiguous, the system automatically 
+generates a flag for clinician review. This ensures that incomplete or uncertain information does 
+not lead to incorrect treatment recommendations. 
+After the patient data has been validated, the system performs molecular subtype classification. 
+Breast cancer is commonly classified into molecular subtypes based on receptor status and 
+proliferation markers. These subtypes include Luminal A, Luminal B, HER2-enriched, and 
+Triple-Negative Breast Cancer (TNBC). Each subtype has distinct treatment strategies and 
+prognosis. The system applies classification rules derived from established oncology guidelines 
+to determine the molecular subtype. 
+Once subtype classification is complete, the patient profile is evaluated by the Rule-Based 
+Decision Engine. This engine contains a structured knowledge base of treatment rules derived 
+from internationally recognized oncology guidelines, including NCCN, ESMO, ASCO, and 
+ISMPO clinical practice guidelines. Each rule represents a specific clinical condition and 
+associated treatment pathway. 
+For example, a simplified rule may be represented as follows: 
+If ER positive and HER2 negative with low Ki-67, classify as Luminal A and recommend 
+endocrine therapy. 
+Similarly, treatment pathways may depend on lymph node involvement. For instance, Luminal 
+A tumors that are node-negative may be treated primarily with endocrine therapy, whereas 
+node-positive Luminal A tumors may require additional chemotherapy depending on 
+clinical risk factors. 
+ 
+7 
+ 
+In addition to identifying treatment pathways, the system performs Contraindication and Safety 
+Analysis. This module evaluates potential treatment risks based on patient health conditions. 
+Certain chemotherapy drugs may pose risks for patients with cardiac disease or kidney 
+dysfunction. If a treatment recommendation conflicts with the patient’s medical condition, the 
+system generates a safety warning. These warnings alert clinicians to potential complications 
+and encourage careful evaluation before finalizing treatment plans. 
+Once treatment pathways have been identified and safety checks completed, the system presents 
+the results through the Doctor Dashboard. This interface displays a comprehensive patient 
+summary, including biomarker status, disease stage, and recommended treatment options. Each 
+recommendation is accompanied by an explanation showing which clinical rules were triggered 
+and which guideline supports the recommendation. 
+The system follows a Human-in-the-Loop Design Principle, meaning that the final treatment 
+decision remains under the authority of the clinician. Doctors can review, modify, or override the 
+system’s recommendations. Any modifications made by clinicians are recorded in the system’s 
+audit log for transparency and accountability. 
+Given the sensitivity of medical information, the system integrates robust security and privacy 
+mechanisms. These include data encryption, secure authentication, role-based access control 
+(RBAC), and audit logging. The design follows privacy-by-design principles inspired by 
+HIPAA data protection standards, ensuring that patient information remains secure throughout 
+the system lifecycle. 
+By combining automated data extraction, guideline-based reasoning, clinical validation, and 
+secure architecture, the proposed solution aims to support oncologists in delivering accurate, 
+efficient, and patient-centered breast cancer treatment planning. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+8 
+ 
+METHODOLOGY/BLOCK 
+DIAGRAM  
+The proposed system follows a structured methodology consisting of multiple interconnected 
+modules that process clinical data and generate treatment recommendations. 
+The workflow begins with the Data Ingestion Phase, where clinicians upload diagnostic reports 
+into the system. These reports may include pathology reports, test results, radiology 
+summaries, or laboratory reports. The system accepts multiple document formats, including 
+PDF, text files, and structured electronic health records. 
+Once uploaded, the reports undergo Preprocessing. In this stage, the system converts document 
+contents into machine-readable text using document parsing and optical character recognition if 
+necessary. The text is then prepared for analysis through tokenization, normalization, and 
+sentence segmentation. 
+Following preprocessing, the system executes the Natural Language Processing (NLP) 
+Pipeline. This module uses a combination of Named Entity Recognition (NER) models and 
+rule-based pattern matching to identify key clinical entities. Important terms such as ER status, 
+HER2 status, tumor size, lymph node involvement, and disease stage are extracted from the 
+report text. 
+After data extraction, the system performs Clinical Data Validation. This step verifies whether 
+all required clinical indicators are available. If essential fields are missing, the system generates a 
+clinical validation alert and requests manual confirmation from the clinician. 
+Validated data is then processed by the Subtype Classification Module. Using biomarker-based 
+rules, the module determines the molecular subtype of the tumor. The subtype classification 
+result forms the basis for selecting appropriate treatment pathways. 
+Next, the structured patient profile is evaluated by the Rule-Based Decision Engine. The engine 
+compares the patient data against a set of guideline-derived decision rules. These rules 
+represent treatment recommendations established by oncology organizations. Each rule consists 
+of a clinical condition and an associated treatment recommendation. 
+The output of the decision engine is passed to the Contraindication and Safety Module, which 
+analyzes potential treatment risks. If a treatment recommendation conflicts with patient 
+comorbidities or laboratory values, the system generates a safety alert for clinician review. 
+Finally, the treatment recommendations are presented through the Doctor Dashboard Interface. 
+Clinicians review the recommendations and either approve or modify the suggested treatment 
+plan.  
+ 
+ 
+ 
+ 
+9 
+ 
+Figure 1 – System Workflow of the Clinical Decision Support System
+ 
+10 
+ 
+Architecture Overview for figure 1 
+The proposed system is an AI-based clinical decision support system designed to assist in 
+personalized cancer treatment planning. The process begins with the upload of clinical 
+documents such as pathology reports, biomarker reports, and patient health records. These 
+documents are processed to extract relevant textual information through parsing and data 
+cleaning. 
+Using Natural Language Processing (NLP) techniques, important clinical features such as tumor 
+stage, biomarker status (HER2, ER, PR), tumor size, and patient comorbidities are identified and 
+converted into a structured patient case profile. This structured data serves as the input for the 
+decision-making module. 
+The system then evaluates the patient profile using a guideline-based treatment evaluation engine 
+aligned with standard clinical protocols. Based on this evaluation, it generates appropriate 
+treatment pathway suggestions, such as endocrine therapy, HER2-targeted therapy, or 
+chemotherapy. These suggestions are further validated through safety and contraindication 
+checks to ensure patient-specific suitability. 
+The recommendations are then reviewed by the doctor, who can approve, modify, or override 
+them. The final treatment plan is displayed through the output dashboard. 
+Additionally, the system incorporates a feedback and outcome tracking mechanism, where doctor 
+decisions and treatment outcomes are recorded. This feedback is used to update the model and 
+knowledge base, enabling continuous improvement and more accurate recommendations over 
+time. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+11 
+ 
+Figure 2 – System Workflow of the Clinical Decision Support System 
+ 
+ 
+12 
+ 
+Architecture Overview for figure 2 
+The system architecture provides a comprehensive workflow for processing clinical data and 
+generating personalized cancer treatment recommendations. It begins with the user interaction 
+layer, where the oncologist uploads patient reports and the patient can access the treatment 
+dashboard. 
+The uploaded clinical documents, including pathology reports, biomarker reports, imaging 
+results, and patient health information, are collected in the clinical document upload module. 
+These documents are then processed through a document processing pipeline, which involves file 
+parsing, text cleaning, and conversion into structured medical text. 
+Next, the system performs NLP-based clinical data extraction to identify key medical features 
+such as tumor stage (TNM), receptor status (ER, PR, HER2), Ki-67 index, tumor size, lymph 
+node involvement, and patient comorbidities. These extracted features are combined to form a 
+structured patient case profile. 
+The patient profile is then evaluated using a guideline-based treatment evaluation module, which 
+follows established clinical protocols to determine suitable treatment strategies. Based on this 
+evaluation, the system generates treatment pathway suggestions such as endocrine therapy, 
+HER2-targeted therapy, chemotherapy, combination therapy, and immunotherapy for specific 
+cases like TNBC. 
+Before presenting the recommendations, a safety and contraindication check is performed to 
+ensure that the suggested treatments are compatible with the patient’s condition. This includes 
+checks for cardiac and renal function, drug contraindications, and allergies. 
+The final recommendations are reviewed by the doctor in the clinical review module, where the 
+doctor can validate, modify, and finalize the treatment plan. The approved plan is then displayed 
+through the output dashboard. 
+Additionally, the system includes a feedback and outcome tracking mechanism, where doctor 
+approvals or overrides and treatment outcomes are recorded. This data is used to update the 
+model and knowledge base, creating a continuous improvement loop that enhances the system’s 
+performance over time. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+13 
+ 
+ 
+ 
+Figure 3 – Biomarker-Driven Breast Cancer Classification Algorithm 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+14 
+ 
+Figure 4 – System Architecture with Security and Data Protection Layers 
+ 
+15 
+ 
+HARDWARE AND SOFTWARE REQUIRED  
+The development and deployment of the proposed system require both hardware infrastructure 
+and specialized software components. 
+Hardware Requirements 
+The system can be developed and tested on a standard personal computer or workstation. 
+Recommended specifications include a multi-core processor, a minimum of 8 GB RAM, and 
+sufficient storage capacity for document processing and database operations. Internet 
+connectivity is required for cloud deployment and collaboration. 
+Software Requirements 
+The frontend interface is implemented using Next.js, a modern web development framework 
+based on React. Next.js supports server-side rendering and provides efficient performance for 
+interactive web applications. 
+The backend server is implemented using FastAPI, a high-performance Python framework 
+designed for building scalable web APIs. FastAPI provides automatic API documentation and 
+supports asynchronous processing, which is beneficial for handling multiple concurrent requests. 
+The system uses PostgreSQL as the primary database management system. PostgreSQL 
+provides strong reliability, advanced query capabilities, and support for structured data storage. 
+The Natural Language Processing module is implemented using Python libraries such as 
+spaCy, combined with rule-based extraction methods for clinical terminology. This hybrid 
+approach helps reduce NLP errors while maintaining high extraction accuracy. 
+Development tools include Visual Studio Code for programming, GitHub for version 
+control, and Docker for containerized deployment. Containerization ensures consistent system 
+behavior across different environments. 
+Security Tools 
+Security features are implemented using TLS encryption for secure data transmission, 
+AES-256 encryption for stored data, and JWT-based authentication mechanisms. 
+Role-based access control ensures that users can only access information relevant to their role. 
+ 
+ 
+ 
+ 
+16 
+ 
+PROPOSED EVALUATION MEASURES  
+The effectiveness of the system will be evaluated through multiple evaluation criteria covering 
+technical performance, clinical accuracy, usability, and security. 
+NLP Extraction Accuracy 
+The Natural Language Processing module will be evaluated using standard metrics including 
+precision, recall, and F1-score. These metrics measure the system’s ability to correctly extract 
+clinical entities from diagnostic reports. 
+Clinical Decision Accuracy 
+The rule-based decision engine will be validated using a set of simulated breast cancer case 
+scenarios. System recommendations will be compared against treatment guidelines provided by 
+oncology organizations. The level of agreement between system outputs and guideline 
+recommendations will be measured. 
+System Usability 
+Usability will be evaluated using the System Usability Scale (SUS) questionnaire. Clinicians 
+will interact with the doctor dashboard and provide feedback on ease of use, interface design, and 
+workflow integration. 
+Security and Privacy Testing 
+Security evaluation will verify the implementation of encryption protocols, authentication 
+mechanisms, and role-based access control. The system will be tested for vulnerabilities such as 
+unauthorized data access or insecure communication channels. 
+System Performance and Clinical Validation 
+System performance will be evaluated based on response time, throughput, and reliability 
+under simulated clinical workloads to ensure the platform remains responsive during real-world 
+usage. 
+In addition to technical performance, clinical decision accuracy will be assessed through 
+validation by practicing oncologists. System-generated treatment recommendations will be 
+compared with doctor opinions and guideline-based decisions to measure correctness and 
+clinical relevance. 
+The system will also incorporate a doctor feedback mechanism, where clinicians can review, 
+accept, modify, or reject recommendations. This feedback will be recorded and used to evaluate 
+system effectiveness and identify areas for improvement. 
+Over time, the system can evolve using a learning-based improvement approach, where 
+feedback from previous cases and outcomes of subsequent patient analyses are used to refine 
+decision rules. This creates a reinforcement learning-inspired feedback loop, enabling 
+continuous enhancement of system performance while maintaining clinician oversight. 
+17 
+ 
+CONCLUSION  
+The proposed system demonstrates a structured and scalable approach to handling complex 
+clinical data derived from oncology guidelines such as NCCN and ESMO. Unstructured medical 
+documents are effectively processed using Natural Language Processing techniques, enabling the 
+extraction of key clinical entities including biomarkers (ER, HER2, Ki-67), nodal status, 
+comorbidities, and treatment indicators. Data preprocessing steps such as text cleaning, 
+normalization, and entity mapping ensure that noisy and fragmented clinical text is transformed 
+into a consistent and machine-readable format. 
+The algorithmic framework combines rule-based reasoning with contextual understanding 
+through ClinicalBERT embeddings, allowing the system to capture both explicit guideline logic 
+and implicit semantic relationships within clinical text. A priority-based decision engine ensures 
+clinically relevant and conflict-free recommendations by considering multiple patient attributes 
+simultaneously. Furthermore, the integration of comorbidity and contraindication handling 
+enhances the safety and real-world applicability of the system. 
+An important strength of the proposed approach lies in its adaptability. The feedback-driven 
+learning mechanism enables continuous refinement of rules based on clinician input, thereby 
+improving recommendation accuracy over time. This hybrid architecture combining deterministic 
+rules, machine learning representations, and human-in-the-loop feedback provides a robust 
+foundation for building explainable and clinically assistive decision support systems. 
+Overall, the system effectively bridges the gap between unstructured medical knowledge and 
+actionable clinical insights, offering a reliable, interpretable, and extensible solution for 
+AI-assisted healthcare decision-making. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+18 
+ 
+REFERENCES  
+[1] C. Mazo, C. Kearns, C. Mooney, and W. M. Gallagher, “Clinical Decision Support Systems in 
+Breast Cancer: A Systematic Review,” Cancers, vol. 12, no. 2, p. 369, 2020. 
+[2] D. Andrzejewski, R. Breitschwerdt, M. Fellmann, and E. Beck, “Supporting Breast Cancer 
+Decisions Using Formalized Guidelines and Expert Decision Patterns,” Health Information 
+Science and Systems, vol. 5, no. 12, 2017. 
+[3] S. E. Hickman, G. C. Baxter, and F. J. Gilbert, “Adoption of Artificial Intelligence in Breast 
+Imaging: Evaluation, Ethical Constraints and Limitations,” British Journal of Cancer, vol. 124, 
+pp. 15–22, 2021. 
+[4] C. Tee and A. H. Gazala, “A Novel Breast Cancer Prediction System,” in Proceedings of the 
+International Conference on Computer and Communication Engineering, 2011. 
+[5] S. Zhou, A. Afzal, H. Fu, et al., “CancerBERT: A Cancer Domain-Specific Language Model 
+for Extracting Breast Cancer Phenotypes from Clinical Text,” Journal of Biomedical Informatics,  
+[6] P. Park, H. Kim, and J. Lee, “Leveraging Natural Language Processing for Efficient 
+Extraction of Breast Cancer Pathology Reports,” PLOS ONE, vol. 20, no. 2, 2025. 
+[7] P. Park et al., “ClinicalBERT-Based Framework for Extracting Clinical Information from 
+Pathology Reports,” Journal of Korean Medical Science, vol. 41, no. e79, 2026. 
+[8] B. Wang et al., “Artificial Intelligence for Breast Cancer Management: Diagnosis, Prognosis, 
+and Treatment Planning,” Nature Biomedical Engineering, 2026. 
+[9] S. Borat et al., “Artificial Intelligence-Driven Clinical Decision Support Systems in Precision 
+Oncology,” Computational Oncology, 2026. 
+[10] B. Wang, Y. Zhang, and L. Chen, “Predicting Breast Cancer Treatment Response and 
+Prognosis Using Artificial Intelligence,” Frontiers in Oncology, vol. 15, 2025. 
+[11] A. Ghasemi et al., “Explainable Artificial Intelligence in Breast Cancer Detection and Risk 
+Prediction: A Systematic Review,” IEEE Access, vol. 12, 2024. 
+[12] F. Jacobs et al., “Digital Innovations in Breast Cancer Care and Clinical Decision Support 
+Systems,” Digital Health, vol. 10, 2024. 
+[13]Molecular portraits of human breast tumours 
+C M Perou 1, T Sørlie, M B Eisen, M van de Rijn, S S Jeffrey, C A Rees, J R Pollack, D T Ross, 
+H Johnsen, L A Akslen, O Fluge, A Pergamenschikov, C Williams, S X Zhu, P E Lønning, A L 
+Børresen-Dale, P O Brown, D Botstein 
+NCCN Breast Cancer Guidelines 
+https://www.nccn.org/guidelines/guidelines-detail?category=1&id=1419 
+ESMO Breast Cancer Clinical Practice Guidelines 
+19 
+ 
+https://www.esmo.org/guidelines/breast-cancer 
+ASCO Breast Cancer Treatment Guidelines 
+https://ascopubs.org/topics/asco-guidelines/breast-cancer 
+ 
+TCGA Breast Cancer (BRCA) Dataset  
+https://portal.gdc.cancer.gov/projects/TCGA-BRCA 
+ 
+The Cancer Imaging Archive (TCIA) Breast Cancer Imaging Collections 
+https://www.cancerimagingarchive.net/browse-collections/ 
+ 
+VinDr-Mammo Mammography Dataset 
+ 
+https://physionet.org/content/vindr-mammo/1.0.0/ 
+ 
+Breast Cancer Histopathology Slide Dataset  
+ 
+https://zenodo.org/record/7081149 
+ 
+ 
+ 
+20 

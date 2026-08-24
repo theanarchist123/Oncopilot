@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import json
+import asyncio
 import httpx
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
@@ -18,13 +19,14 @@ OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL = "https://ollama.com/api"
 
 # Gemini REST API — no SDK needed, just httpx
-GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 
 class ExtractionResponse(BaseModel):
     success: bool
     data: dict | None = None
     error: str | None = None
+    warning: str | None = None  # non-fatal: e.g. LLM quota hit, fell back to mock data
 
 
 def get_llm_prompt(ocr_text: str) -> str:
@@ -67,6 +69,30 @@ PATHOLOGY REPORT TEXT:
 """
 
 
+async def _call_gemini(url: str, payload: dict) -> dict:
+    """Make one Gemini REST call and return the parsed response dict."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        res = await client.post(
+            f"{url}?key={GEMINI_API_KEY}",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        res.raise_for_status()
+        return res.json()
+
+
+def _parse_gemini_response(data: dict) -> dict:
+    content = data["candidates"][0]["content"]["parts"][0]["text"]
+    content = content.strip()
+    if content.startswith("```json"):
+        content = content[7:]
+    if content.startswith("```"):
+        content = content[3:]
+    if content.endswith("```"):
+        content = content[:-3]
+    return json.loads(content.strip())
+
+
 async def extract_with_gemini(text: str) -> dict:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not configured")
@@ -75,31 +101,12 @@ async def extract_with_gemini(text: str) -> dict:
         "contents": [{"parts": [{"text": get_llm_prompt(text)}]}],
         "generationConfig": {
             "temperature": 0.1,
-            "response_mime_type": "application/json"
-        }
+            "response_mime_type": "application/json",
+        },
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        res = await client.post(
-            f"{GEMINI_REST_URL}?key={GEMINI_API_KEY}",
-            json=payload,
-            headers={"Content-Type": "application/json"}
-        )
-        res.raise_for_status()
-        data = res.json()
-
-    content = data["candidates"][0]["content"]["parts"][0]["text"]
-
-    # Strip markdown fences if present
-    content = content.strip()
-    if content.startswith("```json"):
-        content = content[7:]
-    if content.startswith("```"):
-        content = content[3:]
-    if content.endswith("```"):
-        content = content[:-3]
-
-    return json.loads(content.strip())
+    data = await _call_gemini(GEMINI_REST_URL, payload)
+    return _parse_gemini_response(data)
 
 
 async def extract_with_ollama(text: str) -> dict:
@@ -165,29 +172,35 @@ async def extract_report(file: UploadFile = File(...)):
 
     # ── Step 2: LLM — Gemini primary, Ollama fallback ─────────────────────────
     try:
+        llm_warning: str | None = None
         try:
             structured_data = await extract_with_gemini(ocr_text)
         except Exception as e_gemini:
             print(f"[report_extraction] Gemini failed: {e_gemini}. Trying Ollama...")
             try:
                 structured_data = await extract_with_ollama(ocr_text)
+                llm_warning = f"Gemini unavailable ({type(e_gemini).__name__}: {str(e_gemini)[:120]}). Used Ollama fallback."
             except Exception as e_ollama:
                 print(f"[report_extraction] Ollama also failed: {e_ollama}. Using mock data.")
+                llm_warning = (
+                    f"LLM extraction failed (Gemini: {str(e_gemini)[:80]} | "
+                    f"Ollama: {str(e_ollama)[:80]}). Showing placeholder data — please fill fields manually."
+                )
                 structured_data = {
-                    "patient": {"name": "API keys not configured", "age": 45, "sex": "Female"},
-                    "tumour": {"stage": "II", "grade": 2, "size": 3.1, "lymph_nodes_involved": False, "node_count": 0},
+                    "patient": {"name": "", "age": 0, "sex": ""},
+                    "tumour": {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
                     "biomarkers": {
-                        "er_status": "Positive", "pr_status": "Negative", "her2_status": "Negative",
-                        "ki67_percent": 15, "brca1_status": "Unknown", "brca2_status": "Unknown",
-                        "tils_percent": 0, "oncotype_dx_score": 12
+                        "er_status": "Unknown", "pr_status": "Unknown", "her2_status": "Unknown",
+                        "ki67_percent": 0, "brca1_status": "Unknown", "brca2_status": "Unknown",
+                        "tils_percent": 0, "oncotype_dx_score": 0
                     },
                     "health": {
-                        "lvef_percent": 65, "ecog_score": 0,
+                        "lvef_percent": 0, "ecog_score": 0,
                         "comorbidities": [], "medications": []
                     }
                 }
 
-        return ExtractionResponse(success=True, data=structured_data)
+        return ExtractionResponse(success=True, data=structured_data, warning=llm_warning)
 
     except Exception as e:
         return ExtractionResponse(success=False, error=f"LLM extraction failed: {str(e)}")

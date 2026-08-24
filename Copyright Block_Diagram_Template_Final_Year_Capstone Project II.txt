@@ -1,0 +1,268 @@
+COPYRIGHT REGISTRATION TEMPLATE 
+BLOCK DIAGRAM / SYSTEM 
+ARCHITECTURE DIAGRAM 
+Final-Year IT Engineering Project • India 
+ 
+IMPORTANT: This template is for preparing an original block diagram as an Artistic Work for a copyright 
+application. It is a student-preparation template, not the statutory Form XIV. The official Copyright Office portal/form 
+must be used for the actual application. 
+ 
+ 
+1. When Can a Block Diagram Be Considered for Copyright? 
+A block diagram can potentially be protected as an original artistic work when the diagram itself contains original 
+visual expression—such as the student's original arrangement, graphical presentation, symbols, typography, layout and 
+annotations. Copyright protection concerns the expression in the diagram; it does not give exclusive rights over the 
+underlying idea, system concept, algorithm, process or functionality merely because these are represented in the 
+diagram. 
+ 
+Use a diagram created by the student/team, not a copied diagram from a paper, website, textbook, vendor manual 
+or GitHub repository. 
+ 
+If standard symbols are used, the student's originality should lie in the overall original visual arrangement and 
+presentation, not a claim to ownership of common symbols. 
+ 
+If the diagram is simply a screenshot/export from third-party software/template, verify the software/template 
+licence and do not claim third-party elements as original. 
+ 
+If the diagram is used or capable of being used in relation to goods/services, the Copyright Rules contain additional 
+requirements for artistic works; see the official guidance before filing. 
+2. Recommended Copyright Work Description 
+Field 
+Template entry 
+Class of Work 
+Artistic Work 
+Type 
+Original Block Diagram / System Architecture Diagram 
+Title of Work 
+<Exact title of the block diagram> 
+Project Title 
+<Final-year project title> 
+Version / Date 
+<Version and creation date> 
+Author(s) 
+<Student 1>; <Student 2>; ... 
+Applicant / Owner 
+<Student / Institution / Other legal owner as applicable> 
+Status 
+Unpublished / Published (select according to actual status) 
+Software/Project Context 
+<One-sentence description of project> 
+3. Template: Copyright Work Identification Page 
+Place this page before the actual block diagram in your internal submission package. The official portal may require the 
+work itself in its prescribed format; this page is a preparation aid. 
+ITEM 
+DETAIL TO FILL 
+Title of Artistic Work 
+____________________________________________ 
+Project Title 
+____________________________________________ 
+Project ID / Batch 
+____________________________________________ 
+Department / Institution 
+____________________________________________ 
+Author 1 
+Name: __________________  Roll No.: ______________ 
+Author 2 
+Name: __________________  Roll No.: ______________ 
+Author 3 
+Name: __________________  Roll No.: ______________ 
+Author 4 
+Name: __________________  Roll No.: ______________ 
+Faculty Guide 
+____________________________________________ 
+Applicant / Copyright Owner 
+____________________________________________ 
+Creation Date 
+____________________________________________ 
+Version 
+____________________________________________ 
+Originality Statement 
+Created originally by the above author(s), subject to listed 
+third-party elements, if any. 
+ 
+4. Template: Originality & Ownership Declaration 
+TITLE OF WORK: <Exact title of block diagram> 
+PROJECT: <Project title> 
+ 
+Declaration: We, the undersigned author(s), state that the block diagram identified above was created as an original 
+visual representation for our final-year project. We have identified any third-party material, templates, icons, images or 
+graphical elements used in its preparation. We do not claim ownership of third-party material. Ownership of the 
+copyright in the original work is subject to the applicable institutional policy, project agreements and any 
+assignment/NOC. 
+Author 
+Roll No. 
+Signature 
+Date 
+<Student 1> 
+<Roll No.> 
+________________ 
+____________ 
+<Student 2> 
+<Roll No.> 
+________________ 
+____________ 
+<Student 3> 
+<Roll No.> 
+________________ 
+____________ 
+<Student 4> 
+<Roll No.> 
+________________ 
+____________ 
+ 
+5. Template: Third-Party Material Declaration 
+Element used 
+Source 
+Licence / Permission 
+Used as-is / Modified 
+Action taken 
+<Icon/symbol> 
+<Source> 
+<Licence> 
+<As-is/Modified> 
+<Attribution/NOC> 
+<Template> 
+<Source> 
+<Licence> 
+<As-is/Modified> 
+<Attribution/NOC> 
+<Image> 
+<Source> 
+<Licence> 
+<As-is/Modified> 
+<Attribution/NOC> 
+None 
+N/A 
+N/A 
+N/A 
+No third-party 
+elements 
+ 
+IMPORTANT: If all elements are original, write 'None' and retain evidence of how the diagram was created. Do not 
+write 'None' if icons/images/templates were actually imported. 
+6. The Actual Block Diagram — Preparation Format 
+Create the final diagram on a clean page with: 
+ 
+Exact project title. 
+ 
+Figure title, e.g., 'Block Diagram of <Project Name>'. 
+ 
+Clear, original boxes, arrows, labels and annotations. 
+ 
+Consistent typography and spacing. 
+ 
+Student/institution identification if required by institutional policy. 
+ 
+Version/date in the internal master copy. 
+ 
+No third-party watermark or copyrighted template unless permitted. 
+ 
+No passwords, API keys or confidential credentials. 
+ 
+[ INSERT ORIGINAL BLOCK DIAGRAM HERE ] 
+ 
+ 
+ 
+Example block 
+Purpose 
+INPUT / DATA 
+User input, sensor data, images, etc. 
+PREPROCESSING 
+Student-defined processing stage 
+CORE MODULE 
+Main project functionality 
+AI / ALGORITHM 
+Model/processing module, if applicable 
+OUTPUT 
+Final result / prediction / control 
+ 
+Replace the example blocks above with the team's actual original diagram. The example table is only a layout guide 
+and is not the copyright work itself. 
+7. Suggested File to Upload 
+File 
+Purpose 
+Suggested name 
+Final block diagram 
+The actual artistic work 
+ProjectName_BlockDiagram.pdf 
+High-resolution source 
+Internal evidence; retain 
+original editable file 
+ProjectName_BlockDiagram_Source.svg/png/drawio/etc. 
+Originality/ownership 
+declaration 
+Supporting internal 
+document 
+ProjectName_BlockDiagram_Declaration.pdf 
+Third-party material register 
+Rights audit 
+ProjectName_BlockDiagram_ThirdParty.pdf 
+NOC/assignment 
+Where ownership requires it 
+ProjectName_BlockDiagram_NOC.pdf 
+ 
+IMPORTANT: The official Copyright Office online portal currently states that an Artistic Work is uploaded in 
+PDF/JPG format. Verify the portal's current size/format limits immediately before submission. 
+8. Important: Block Diagram vs Software Copyright 
+If you are registering... 
+What the work represents 
+Typical approach 
+Block diagram alone 
+Original visual expression 
+Artistic Work 
+Source code 
+Original computer-program expression 
+Computer Software 
+Project report 
+Original written expression 
+Literary Work 
+Project logo 
+Original artistic expression + possible 
+brand 
+Artistic Work; separately consider 
+Trademark 
+ 
+A team may have multiple copyrightable works, but the Copyright Rules state that each application is in respect of one 
+work only. Therefore, do not assume that one application automatically covers the source code, report and block 
+diagram as separate works. 
+9. Special Check for Artistic Works Used With Goods/Services 
+The Copyright Rules contain an additional requirement where an artistic work is used or is capable of being used in 
+relation to goods or services. In such cases, the application includes a statement to that effect and the prescribed Trade 
+Marks Registrar certificate requirement. This is particularly relevant to logos/brand artwork and should not be ignored 
+merely because the artwork is also a project diagram. 
+IMPORTANT: For a technical block diagram used only as project documentation, determine the facts before treating 
+it as artwork used in relation to goods/services. If the same artwork is a commercial logo/brand asset, separately assess 
+trademark implications. 
+10. Final Student Checklist 
+☐ The block diagram is actually created by the student/team. 
+☐ The exact title matches the copyright application. 
+☐ All actual authors/contributors are identified. 
+☐ Ownership is confirmed under institutional/project policy. 
+☐ Third-party icons/images/templates have been checked. 
+☐ The final diagram is saved in the official portal's accepted format. 
+☐ An editable master/source file is retained. 
+☐ The diagram contains no confidential credentials. 
+☐ If the diagram is a logo/brand asset, trademark requirements have been considered. 
+☐ If the project also contains patentable technical subject matter, patent filing timing has been considered before public 
+disclosure. 
+☐ The official Form XIV and current portal instructions are used for the actual filing. 
+11. Official Government of India References 
+Source 
+Use 
+Copyright Office — Form XIV 
+Statutory application format 
+Copyright Office — General Instructions 
+Applicant/signature and work submission instructions 
+Copyright Rules, 2013 — Chapter XIII / Rule 70 
+Registration requirements, one work per application, artistic-work 
+provisions 
+Copyright Office — Online Filing Instructions 
+Current upload format and online workflow 
+ 
+Official links: 
+https://copyright.gov.in/Copyright_Rules_2013/formxiv.html 
+https://copyright.gov.in/Copyright_Rules_2013/general_instructions.html 
+https://copyright.gov.in/Copyright_Rules_2013/chapter_xiii.html 
+https://copyright.gov.in/UserRegistration/frmLoginPage.aspx 
+ 
+Academic template • Final-Year IT Project • India • August 2026 

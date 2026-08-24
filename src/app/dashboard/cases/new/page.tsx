@@ -50,6 +50,7 @@ export default function NewCaseForm() {
     const [error, setError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
+    const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
     // Form State (simplified for UI demo)
     const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
@@ -71,6 +72,7 @@ export default function NewCaseForm() {
         
         setIsUploading(true);
         setError(null);
+        setUploadWarning(null);
         try {
             const res = await api.extractReport(file);
             if (res.success && res.data) {
@@ -117,6 +119,7 @@ export default function NewCaseForm() {
                     }));
                 }
                 setUploadSuccess(true);
+                if (res.warning) setUploadWarning(res.warning);
                 setTimeout(() => {
                     setUploadSuccess(false);
                     setStep(1); // Proceed to step 1 after auto-filling
@@ -221,7 +224,7 @@ export default function NewCaseForm() {
                     <div className="flex flex-col items-center">
                         <div className="w-12 h-12 border-4 border-[#0891B2] border-t-transparent rounded-full animate-spin mb-4" />
                         <p className="text-[#0891B2] font-semibold text-lg">Extracting Data...</p>
-                        <p className="text-sm text-slate-500">Analyzing via OCR & Clinical AI</p>
+                        <p className="text-sm text-slate-500">OCR + AI analysis — may take up to 30s</p>
                     </div>
                 ) : uploadSuccess ? (
                     <div className="flex flex-col items-center text-emerald-400">
@@ -237,6 +240,17 @@ export default function NewCaseForm() {
                     </div>
                 )}
             </label>
+
+            {/* LLM degradation warning */}
+            {uploadWarning && (
+                <div className="w-full max-w-xl flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mt-2 text-left">
+                    <TriangleAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-amber-300 font-semibold text-sm">AI extraction degraded</p>
+                        <p className="text-amber-400/80 text-xs mt-0.5">OCR succeeded but the LLM could not parse the report (Gemini quota may be exhausted). Fields were not auto-filled — please enter them manually.</p>
+                    </div>
+                </div>
+            )}
 
             <div className="flex items-center gap-4 mt-8 w-full max-w-xl">
                 <div className="flex-1 h-px bg-slate-800" />

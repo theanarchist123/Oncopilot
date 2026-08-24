@@ -1,0 +1,475 @@
+INTELLECTUAL PROPERTY RIGHTS (IPR) 
+Copyright Registration Guide for Final-Year IT 
+Engineering Projects 
+India • Student/Faculty Reference • Updated August 2026 
+(Important: Academic preparation guide, not legal advice. The current Copyright Office portal, Copyright Act/Rules 
+and institutional IPR policy control if there is any discrepancy.) 
+ 
+ 
+1. Purpose 
+This guide helps final-year IT engineering students identify copyrightable project outputs and prepare a practical 
+document package for online copyright registration in India. 
+ 
+Computer programmes are a recognized class of copyright work. 
+ 
+A copyright application is for one work at a time. 
+ 
+For software, copyright concerns original expression/code; it does not turn an abstract idea or algorithm into 
+copyright. 
+ 
+Confirm who owns the work before filing—student, joint authors, institution or sponsor. 
+2. IPR Map for students of an IT Final-Year Capstone Project-II 
+IP Right 
+Protects 
+IT example 
+Action 
+Copyright 
+Original expression 
+Source code, report, 
+original graphics/video 
+Prepare work + 
+ownership/authorship 
+record 
+Patent 
+Qualifying 
+invention/technical 
+solution 
+Novel technical 
+method/system 
+Evaluate and file before 
+public disclosure 
+Trademark 
+Brand identifier 
+Project/product name, logo 
+Search and assess 
+separately 
+Design 
+Qualifying visual features 
+of an article 
+Novel product enclosure 
+Consider Designs Act route 
+Trade secret 
+Confidential valuable 
+information 
+Undisclosed 
+calibration/know-how 
+Confidentiality/access 
+controls 
+GI 
+Geographical-origin goods 
+Usually not ordinary IT 
+projects 
+Generally not applicable 
+ 
+3. Which Copyright Category Fits? 
+Project output 
+Likely class 
+Prepare 
+Key point 
+Web/mobile/desktop 
+software 
+Computer Software 
+Source-code PDF + portal 
+forms 
+Most common IT project 
+Project report/manual 
+Literary 
+Complete original report 
+Separate work if 
+registration is desired 
+Original 
+diagrams/illustrations/logo 
+Artistic 
+Artwork in required format 
+Third-party artwork cannot 
+be claimed 
+Project demo video 
+Cinematograph Film 
+Final video + rights record 
+Follow current portal 
+instructions 
+Original music/audio 
+Musical / Sound Recording 
+Audio + ownership/rights 
+record 
+Third-party tracks need 
+permission/licence 
+Database/compilation 
+Literary/compilation 
+context 
+Database work + 
+provenance record 
+Originality/rights must be 
+assessed 
+ 
+Important: Do not confuse a project containing many files with one copyright work. Decide the specific work 
+being registered. 
+ 
+4. What Students Must Not Claim 
+ 
+Open-source libraries/frameworks as their own. 
+ 
+GitHub code without checking its licence and rights. 
+ 
+Third-party datasets, images, icons, fonts, music, videos, APIs or pretrained models merely because they are online. 
+ 
+The abstract project idea/problem statement as software expression. 
+ 
+Patent rights merely by registering copyright. 
+5. Official Online Filing — High-Level Workflow 
+ 
+Create/login to the official Copyright Office portal. 
+ 
+Select online Copyright Registration. 
+ 
+Complete Form XIV and save. 
+ 
+Keep signatures, work and supporting documents ready for upload. 
+ 
+Upload the work and required documents. 
+ 
+Complete Statement of Further Particulars where applicable. 
+ 
+Pay the prescribed fee through the portal. 
+ 
+Record the Diary Number and retain the submitted package. 
+ 
+Monitor status/deficiencies and respond as required. 
+Important: The official online instructions currently state that uploaded documents should not be password protected. 
+They specify PDF/JPG for artistic works, MP3 for sound recordings, and PDF for literary/dramatic, musical and 
+software works. For software, the portal currently specifies a PDF containing at least the first 10 and last 10 pages 
+of source code, or the entire source code if it is fewer than 20 pages, with no blocked-out/redacted portions. 
+6. Software Upload Package 
+Document 
+What to prepare 
+Suggested filename 
+Software work 
+Required source-code material 
+ProjectName_SourceCode.pdf 
+Source code 
+First 10 + last 10 pages; or entire 
+code if <20 pages 
+ProjectName_SourceCode.pdf 
+Object code 
+Keep ready; follow current portal 
+field/instruction 
+ProjectName_ObjectCode.pdf 
+Form XIV 
+Applicant/work/ownership 
+particulars 
+Portal entry + saved copy 
+Statement of Particulars 
+Work, author, ownership/publication 
+particulars 
+Portal entry + saved copy 
+Statement of Further Particulars 
+Applicable software particulars 
+Portal entry + saved copy 
+NOC/assignment 
+If author and applicant/owner differ 
+or policy requires 
+Ownership_NOC.pdf 
+Third-party register 
+Open-source/dataset/API/licence 
+audit 
+ThirdParty_Register.pdf 
+ 
+ 
+ 
+7. Preparing the Source-Code PDF 
+ 
+Use the exact software title/version corresponding to the registered work. 
+ 
+Include a simple cover page identifying title, version/date, applicant/owner and authors. 
+ 
+Follow the current upload rule: first 10 and last 10 pages, or entire code if fewer than 20 pages. 
+ 
+Do not black out/redact required source-code pages where the portal prohibits it. 
+ 
+Use readable formatting and page numbers. 
+ 
+Do not upload passwords, API keys, private keys, credentials or sensitive personal data. Keep a secure internal 
+evidence copy. 
+ 
+Retain Git/version-control history and dated development records. 
+Suggested cover page 
+TITLE: <Exact Software Title> 
+VERSION/DATE: <Version and date> 
+CLASS: Computer Software / Computer Programme 
+APPLICANT/OWNER: <Name> 
+AUTHORS: <Names> 
+LANGUAGE(S): <Python/Java/etc.> 
+PROJECT ID: <Institution ID> 
+ 
+8. Authorship vs Ownership 
+Author and copyright owner can be different. Form XIV and the Statement of Particulars ask for the applicant's 
+interest/ownership information. Confirm the institution's IPR policy, guide/sponsor agreement and any assignment/NOC 
+requirements before filing. 
+Situation 
+Verify 
+Single student creator 
+Author + ownership 
+Multiple student creators 
+Joint authorship/contribution + ownership 
+Faculty guide involved 
+Whether actual contribution makes the person an author; 
+title alone is not enough 
+Institution claims ownership 
+Institutional policy/authorization/NOC/assignment 
+Industry-sponsored project 
+Sponsor ownership, confidentiality and publication 
+clauses 
+Open-source components 
+Licence, attribution, modifications and original 
+contribution 
+9. Practical Document Formats for Student Teams 
+A. Software Copyright Pack 
+File 
+Purpose 
+Contents 
+01_Project_Identity.pdf 
+Identify work 
+Title, version, applicant, authors, 
+project ID 
+02_SourceCode.pdf 
+Primary work 
+Required source-code pages 
+03_ObjectCode.pdf 
+Supporting material 
+Object/binary material if requested 
+04_Author_Contribution.pdf 
+Authorship record 
+Individual contribution + 
+signatures/date 
+05_Ownership_NOC_Assignment.pdf Ownership 
+NOC/assignment/authorization if 
+applicable 
+06_ThirdParty_Register.pdf 
+Rights audit 
+Component, source, version, licence, 
+use 
+07_Development_Record.pdf 
+Evidence 
+Milestones, Git history, dates 
+08_ReadMe_Notices.pdf 
+Software record 
+Dependencies and third-party notices 
+ 
+B. Literary Work — Report/Manual 
+Prepare 
+Suggested contents 
+Work PDF 
+Complete original report/manual 
+Author/owner declaration 
+Title, authors, ownership, contribution 
+NOC/assignment 
+Where author and owner differ 
+Third-party record 
+Sources, licences and permissions 
+ 
+C. Artistic Work — Logo/UI Graphics/Illustrations 
+Prepare 
+Suggested contents 
+Artwork file 
+Final original artwork in current portal format 
+Source file 
+SVG/AI/PSD/PNG retained internally 
+Author/owner record 
+Creator and ownership 
+Trademark/design check 
+Where relevant; copyright is not a substitute 
+NOC/assignment 
+Where applicable 
+ 
+D. Demo Video / Cinematograph Film 
+Prepare 
+Suggested contents 
+Final video 
+Complete work 
+Script/storyboard 
+Authorship evidence 
+Music/media licences 
+Rights for third-party content 
+Agreements/NOCs 
+Where applicable 
+ 
+E. Sound Recording 
+Prepare 
+Suggested contents 
+Final audio 
+Current portal-supported format 
+Underlying rights record 
+Music/lyrics/performer rights where relevant 
+Agreements/NOCs 
+Multiple rights holders 
+ 
+ 
+ 
+10. Form XIV — Student Preparation Sheet 
+Field/area 
+Prepare 
+Applicant 
+Exact legal name, address, nationality/contact 
+Interest 
+Author/owner/other applicable interest 
+Work title 
+Exact title matching work 
+Class 
+Computer Software / Literary / Artistic etc. 
+Authors 
+Accurate author details 
+Publication 
+Published/unpublished + details where applicable 
+Other parties 
+Details where notice/procedure requires 
+Enclosures 
+Work + supporting documents 
+Signature 
+Applicant signature as required 
+ 
+Important: Do not replace Form XIV with a student-created form. Use the official Copyright Office form/online 
+workflow. 
+11. Statement of Particulars — Information to Keep Ready 
+ 
+Applicant name, address and nationality. 
+ 
+Nature of applicant's interest. 
+ 
+Class and description of work. 
+ 
+Exact title. 
+ 
+Language; for computer software, the official form instructions ask for the software language. 
+ 
+Author details. 
+ 
+Publication status/details if applicable. 
+ 
+Owners of rights and assignments/licences where relevant. 
+12. Statement of Further Particulars 
+The official online instructions state that the Statement of Further Particulars applies to Literary/Dramatic, Musical, 
+Artistic and Software works. Students should use the fields displayed by the current portal rather than relying on old 
+screenshots or third-party forms. 
+13. Open-Source and Third-Party Material Register 
+Open-source software remains copyrighted software distributed under licence. Students may be able to use, modify and 
+distribute it under that licence, but cannot claim the upstream work as their own. 
+Component 
+Record before filing 
+Open-source library 
+Name, version, source, licence, notices, modifications 
+GitHub code 
+Repository, author, licence, commit/version, 
+reused/modified portions 
+Dataset 
+Provider, version, licence/terms, attribution, restrictions 
+Images/icons/fonts 
+Source, licence/permission 
+Pretrained model 
+Source, model licence and relevant dataset/licence 
+information 
+API/service 
+Terms/licence and output restrictions 
+AI assistance 
+Institutional policy, tool terms and human contribution 
+record 
+ 
+14. Patent Timing — Important 
+If the project contains a potentially patentable technical invention, discuss patent filing before public disclosure. A 
+copyright registration does not substitute for patent protection. A paper, poster, public demonstration, website or 
+repository can create patentability issues depending on the facts. 
+Project asset 
+Potential IP 
+Original source code 
+Copyright 
+Novel technical invention 
+Patentability assessment 
+Brand/product name 
+Trademark 
+Distinctive product appearance 
+Design 
+Confidential know-how 
+Trade secret 
+15. Final-Year Project Copyright Checklist 
+ 
+☐ Final project title is consistent everywhere. 
+ 
+☐ Applicant/owner is confirmed under institutional policy. 
+ 
+☐ All authors/contributors are accurately identified. 
+ 
+☐ Original code is separated/documented from third-party code. 
+ 
+☐ Open-source licenses have been checked. 
+ 
+☐ Dataset/images/fonts/models/APIs have been checked. 
+ 
+☐ Source-code PDF follows current Copyright Office upload instructions. 
+ 
+☐ No prohibited redactions/blocked source-code portions are present. 
+ 
+☐ No passwords/API keys/private keys/sensitive credentials are included. 
+ 
+☐ NOCs/assignments/agreements are ready where applicable. 
+ 
+☐ Form XIV/Statement of Particulars/Statement of Further Particulars information is checked. 
+ 
+☐ Uploaded files are not password protected. 
+ 
+☐ Patent/IPR cell has been consulted if patentability may exist. 
+ 
+☐ Copies of submission, receipt, fee proof and Diary Number are retained. 
+16. Recommended Project IPR Folder 
+Folder structure 
+PROJECT_IPR/ 
+├── 01_Project_Identity/ 
+│   ├── Project_Title_Ownership.pdf 
+│   └── Author_Contribution.pdf 
+├── 02_Copyright/ 
+│   ├── SourceCode.pdf 
+│   ├── ObjectCode.pdf 
+│   ├── FormXIV_Copy.pdf 
+│   ├── StatementOfParticulars_Copy.pdf 
+│   └── StatementOfFurtherParticulars_Copy.pdf 
+├── 03_ThirdParty/ 
+│   ├── OpenSource_Register.xlsx 
+│   └── ThirdParty_Notices.pdf 
+├── 04_Ownership/ 
+│   ├── NOC.pdf 
+│   └── Assignment.pdf 
+├── 05_Patent_IF_Applicable/ 
+│   └── Invention_Disclosure.pdf 
+└── 06_Submission_Record/ 
+    ├── Payment_Receipt.pdf 
+    └── Diary_Number.pdf 
+ 
+17. Official Government of India Sources 
+Official resource 
+Link 
+Copyright Office — Online Filing/Login 
+https://copyright.gov.in/UserRegistration/frmLoginPage.aspx 
+Copyright Office — Form XIV 
+https://copyright.gov.in/Copyright_Rules_2013/formxiv.html 
+Copyright Office — General Instructions 
+https://copyright.gov.in/Copyright_Rules_2013/general_instructions.html 
+Copyright Rules 2013 — Rule 70 
+https://copyright.gov.in/Copyright_Rules_2013/chapter_xiii.html 
+Copyright Office — Download 
+Forms/Documents 
+https://copyright.gov.in/frmDownloadPage.aspx 
+Copyright Office — FAQs 
+https://copyright.gov.in/frmFAQ.aspx 
+Copyright Office — Handbook of 
+Copyright Law 
+https://copyright.gov.in/documents/handbook.html 
+ 
+18. Source-Based Notes for Students 
+The official Copyright Office states that Form XIV is the prescribed application; the Rules require an application to be 
+for one work and specify source-code requirements for computer-programme registration. The online filing instructions 
+provide the current upload formats and software source-code-page instructions. Check these official resources 
+immediately before submission because portal procedures and technical upload requirements can change. 
+ 
+ 
+ 
+ 
+ 
+(Note: Prepared for academic IPR awareness and final-year project readiness • India • August 2026) 
