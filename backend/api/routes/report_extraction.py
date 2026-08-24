@@ -135,27 +135,50 @@ async def extract_report(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
 
-    # ── Step 1: OCR via OCR.space ──────────────────────────────────────────────
+    # ── Step 1: OCR via OCR.space (base64 inline — faster than multipart upload) ──
     try:
         content = await file.read()
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            ocr_data_form = {
-                "apikey": OCR_SPACE_API_KEY,
-                "OCREngine": "2",
-            }
-            if file.filename.lower().endswith(".pdf"):
-                ocr_data_form["filetype"] = "PDF"
 
+        # Guard: OCR.space free plan has a 1MB limit
+        if len(content) > 1_000_000:
+            return ExtractionResponse(success=False, error="File too large — please upload a file under 1MB")
+
+        import base64
+        b64 = base64.b64encode(content).decode("utf-8")
+
+        # Detect file type
+        fname = file.filename.lower()
+        if fname.endswith(".pdf"):
+            file_type = "PDF"
+        elif fname.endswith(".png"):
+            file_type = "PNG"
+        elif fname.endswith(".jpg") or fname.endswith(".jpeg"):
+            file_type = "JPG"
+        else:
+            file_type = "AUTO"
+
+        print(f"[report_extraction] OCR start — file={file.filename}, size={len(content)}B, type={file_type}")
+
+        async with httpx.AsyncClient(timeout=25.0) as client:
             ocr_res = await client.post(
                 "https://api.ocr.space/parse/image",
-                data=ocr_data_form,
-                files={"file": (file.filename, content, file.content_type or "application/octet-stream")}
+                data={
+                    "apikey": OCR_SPACE_API_KEY,
+                    "OCREngine": "2",
+                    "base64Image": f"data:{file.content_type or 'application/octet-stream'};base64,{b64}",
+                    "filetype": file_type,
+                    "isTable": "false",
+                    "scale": "true",
+                },
             )
             ocr_res.raise_for_status()
             ocr_json = ocr_res.json()
 
+        print(f"[report_extraction] OCR response: IsErrored={ocr_json.get('IsErroredOnProcessing')}, pages={len(ocr_json.get('ParsedResults', []))}")
+
         if ocr_json.get("IsErroredOnProcessing"):
             err = ocr_json.get("ErrorMessage", ["Unknown OCR Error"])[0]
+            print(f"[report_extraction] OCR failed: {err}")
             return ExtractionResponse(success=False, error=f"OCR failed: {err}")
 
         parsed_results = ocr_json.get("ParsedResults", [])
@@ -164,11 +187,18 @@ async def extract_report(file: UploadFile = File(...)):
 
         ocr_text = "\n".join(page.get("ParsedText", "") for page in parsed_results)
 
+    except httpx.TimeoutException as e:
+        print(f"[report_extraction] OCR timed out: {e}")
+        return ExtractionResponse(success=False, error="OCR timed out — try a smaller or clearer file")
     except Exception as e:
+        print(f"[report_extraction] OCR exception: {type(e).__name__}: {e}")
         return ExtractionResponse(success=False, error=f"OCR processing failed: {str(e)}")
 
     if not ocr_text.strip():
         return ExtractionResponse(success=False, error="Extracted text is empty")
+
+    print(f"[report_extraction] OCR success — {len(ocr_text)} chars extracted")
+
 
     # ── Step 2: LLM — Gemini primary, Ollama fallback ─────────────────────────
     try:
