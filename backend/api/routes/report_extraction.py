@@ -19,7 +19,7 @@ OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL = "https://ollama.com/api"
 
 # Gemini REST API — no SDK needed, just httpx
-GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
 
 
 class ExtractionResponse(BaseModel):
