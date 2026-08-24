@@ -233,15 +233,21 @@ export default function NewCaseForm() {
 
             <label className={cn(
                 "w-full max-w-xl h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group",
-                error ? "border-rose-500/50 bg-rose-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
+                error ? "border-rose-500/50 bg-rose-500/5" : uploadWarning ? "border-amber-500/50 bg-amber-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
             )}>
-                <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess} />
+                <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess || !!uploadWarning} />
                 
                 {isUploading ? (
                     <div className="flex flex-col items-center">
                         <div className="w-12 h-12 border-4 border-[#0891B2] border-t-transparent rounded-full animate-spin mb-4" />
                         <p className="text-[#0891B2] font-semibold text-lg">Extracting Data...</p>
                         <p className="text-sm text-slate-500">OCR + AI analysis — may take up to 30s</p>
+                    </div>
+                ) : uploadWarning ? (
+                    <div className="flex flex-col items-center text-amber-500/80">
+                        <TriangleAlert className="w-16 h-16 mb-4 opacity-50" />
+                        <p className="font-semibold text-lg text-amber-400">Manual Entry Required</p>
+                        <p className="text-sm">Please continue using the button below</p>
                     </div>
                 ) : uploadSuccess ? (
                     <div className="flex flex-col items-center text-emerald-400">
