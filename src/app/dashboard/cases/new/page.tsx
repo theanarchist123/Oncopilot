@@ -235,7 +235,7 @@ export default function NewCaseForm() {
                 "w-full max-w-xl h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group",
                 error ? "border-rose-500/50 bg-rose-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
             )}>
-                <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess} />
+                <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess} />
                 
                 {isUploading ? (
                     <div className="flex flex-col items-center">
@@ -768,7 +768,7 @@ export default function NewCaseForm() {
                        <label className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-[#0891B2] hover:bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full shadow-lg cursor-pointer transition-all">
                            <Upload className="w-4 h-4 text-[#0891B2]" />
                            <span className="text-sm font-medium">{isUploading ? 'Extracting...' : 'Upload Report to Auto-fill'}</span>
-                           <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} disabled={isUploading} />
+                           <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading} />
                        </label>
                    </motion.div>
                )}
