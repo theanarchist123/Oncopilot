@@ -119,11 +119,16 @@ export default function NewCaseForm() {
                     }));
                 }
                 setUploadSuccess(true);
-                if (res.warning) setUploadWarning(res.warning);
-                setTimeout(() => {
-                    setUploadSuccess(false);
-                    setStep(1); // Proceed to step 1 after auto-filling
-                }, 2000);
+                if (res.warning) {
+                    // LLM failed — stay on step 0, show the warning banner, let user continue manually
+                    setUploadWarning(res.warning);
+                } else {
+                    // Clean extraction — auto-advance after 2s
+                    setTimeout(() => {
+                        setUploadSuccess(false);
+                        setStep(1);
+                    }, 2000);
+                }
             } else {
                 setError(res.error || "Failed to extract report data.");
             }
@@ -241,26 +246,35 @@ export default function NewCaseForm() {
                 )}
             </label>
 
-            {/* LLM degradation warning */}
-            {uploadWarning && (
-                <div className="w-full max-w-xl flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mt-2 text-left">
-                    <TriangleAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-amber-300 font-semibold text-sm">AI extraction degraded</p>
-                        <p className="text-amber-400/80 text-xs mt-0.5">OCR succeeded but the LLM could not parse the report (Gemini quota may be exhausted). Fields were not auto-filled — please enter them manually.</p>
+            {/* LLM degradation warning — stays on step 0, user must click to continue */}
+            {uploadWarning ? (
+                <div className="w-full max-w-xl bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-4 mt-3 text-left space-y-3">
+                    <div className="flex items-start gap-3">
+                        <TriangleAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-amber-300 font-semibold text-sm">AI extraction failed — Gemini quota exhausted</p>
+                            <p className="text-amber-400/80 text-xs mt-1">OCR ran but the AI could not parse the report. Please enter the clinical fields manually.</p>
+                        </div>
                     </div>
+                    <Button
+                        className="w-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-semibold"
+                        onClick={() => { setUploadWarning(null); setUploadSuccess(false); setStep(1); }}
+                    >
+                        Continue — Enter Manually →
+                    </Button>
                 </div>
+            ) : (
+                <>
+                    <div className="flex items-center gap-4 mt-8 w-full max-w-xl">
+                        <div className="flex-1 h-px bg-slate-800" />
+                        <span className="text-slate-500 text-sm font-medium">OR</span>
+                        <div className="flex-1 h-px bg-slate-800" />
+                    </div>
+                    <Button variant="outline" className="mt-8 border-slate-700 bg-slate-900/50 text-slate-300" onClick={() => setStep(1)}>
+                        Skip &amp; Enter Manually
+                    </Button>
+                </>
             )}
-
-            <div className="flex items-center gap-4 mt-8 w-full max-w-xl">
-                <div className="flex-1 h-px bg-slate-800" />
-                <span className="text-slate-500 text-sm font-medium">OR</span>
-                <div className="flex-1 h-px bg-slate-800" />
-            </div>
-
-            <Button variant="outline" className="mt-8 border-slate-700 bg-slate-900/50 text-slate-300" onClick={() => setStep(1)}>
-                Skip & Enter Manually
-            </Button>
         </motion.div>
     );
 
