@@ -145,12 +145,29 @@ async def extract_report(file: UploadFile = File(...)):
             print(f"[report_extraction] Text file detected — reading directly ({len(content)}B)")
             ocr_text = content.decode("utf-8", errors="replace")
 
-        # ── Images / PDFs — need OCR ──
-        else:
-            # Guard: OCR.space free plan has a 1MB limit
-            if len(content) > 1_000_000:
-                return ExtractionResponse(success=False, error="File too large — please upload a file under 1MB")
-
+        # ── PDF files — try local extraction first to bypass 3-page limit ──
+        elif fname.endswith(".pdf"):
+            print(f"[report_extraction] PDF file detected — trying local extraction ({len(content)}B)")
+            import pypdf
+            import io
+            
+            try:
+                reader = pypdf.PdfReader(io.BytesIO(content))
+                extracted_pages = []
+                for page in reader.pages:
+                    extracted_pages.append(page.extract_text() or "")
+                
+                pdf_text = "\n".join(extracted_pages).strip()
+                if len(pdf_text) > 100:  # If we got meaningful text, skip OCR
+                    print(f"[report_extraction] Local PDF extraction successful ({len(pdf_text)} chars)")
+                    ocr_text = pdf_text
+                else:
+                    print("[report_extraction] Local PDF extraction yielded little/no text, falling back to OCR")
+            except Exception as e:
+                print(f"[report_extraction] Local PDF extraction failed: {e}. Falling back to OCR")
+                
+        # ── Images / Scanned PDFs — need OCR ──
+        if "ocr_text" not in locals() or not ocr_text:
             import base64
             b64 = base64.b64encode(content).decode("utf-8")
 
@@ -165,7 +182,7 @@ async def extract_report(file: UploadFile = File(...)):
 
             print(f"[report_extraction] OCR start — file={file.filename}, size={len(content)}B, type={file_type}")
 
-            async with httpx.AsyncClient(timeout=25.0) as client:
+            async with httpx.AsyncClient(timeout=45.0) as client:
                 ocr_res = await client.post(
                     "https://api.ocr.space/parse/image",
                     data={
