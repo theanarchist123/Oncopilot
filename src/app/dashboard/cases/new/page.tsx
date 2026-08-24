@@ -218,10 +218,22 @@ export default function NewCaseForm() {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 text-center flex flex-col items-center justify-center min-h-[400px]">
             <h2 className="text-3xl font-bold text-white mb-2">Upload Pathology Report</h2>
             <p className="text-slate-400 max-w-lg mb-8">Upload a PDF or image of the patient's pathology report. Our AI will automatically extract clinical markers and pre-fill the case form.</p>
-            
+
+            {/* Upload error — shown inline on step 0 */}
+            {error && !uploadWarning && (
+                <div className="w-full max-w-xl flex items-start gap-3 bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 text-left">
+                    <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-rose-300 font-semibold text-sm">Upload failed</p>
+                        <p className="text-rose-400/80 text-xs mt-0.5">{error}</p>
+                    </div>
+                    <button onClick={() => setError(null)} className="text-rose-400/60 hover:text-rose-300 text-xs mt-0.5">✕</button>
+                </div>
+            )}
+
             <label className={cn(
                 "w-full max-w-xl h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group",
-                uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
+                error ? "border-rose-500/50 bg-rose-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
             )}>
                 <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess} />
                 
