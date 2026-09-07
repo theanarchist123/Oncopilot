@@ -240,7 +240,23 @@ function PathCard({ rec, rank, isExpanded, onToggle }: {
 }
 
 const PrognosticScores = ({ scores }: { scores: any }) => {
-    if (!scores || (!scores.npi && !scores.cts5)) return null;
+    // Show a graceful unavailable state instead of hiding the section entirely
+    // (scores can be null when API times out on weak network)
+    const hasScores = scores && (scores.npi || scores.cts5);
+    if (!hasScores) return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="space-y-4">
+            <h2 className="font-semibold text-white">Prognostic Risk Scores</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+                {["Nottingham Prognostic Index (NPI)", "CTS5 Risk Score"].map(title => (
+                    <div key={title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 min-h-[200px] text-center">
+                        <Gauge className="w-8 h-8 text-slate-600" />
+                        <p className="text-slate-500 text-sm font-medium">{title}</p>
+                        <p className="text-slate-600 text-xs">Score unavailable — risk data was not returned by the analysis engine.</p>
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    );
 
     const renderGauge = (title: string, data: any, min: number, max: number) => {
         if (!data) return null;
@@ -696,9 +712,13 @@ function ResultsContent() {
             {/* Footer */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="flex flex-wrap gap-3 justify-end pt-4 border-t border-slate-800">
-                {currentResult.case_id && (
+                {currentResult.case_id ? (
                     <Button variant="outline" onClick={() => window.open(`/patient?caseId=${currentResult.case_id}`, '_blank')} className="border-slate-700 bg-slate-900 text-slate-300 gap-2 mr-auto">
                         <Share2 className="w-4 h-4 text-[#0891B2]" /> Open Patient Portal
+                    </Button>
+                ) : (
+                    <Button variant="outline" disabled className="border-slate-800 bg-slate-900/50 text-slate-600 gap-2 mr-auto cursor-not-allowed" title="Case was not saved — re-run on a stable connection">
+                        <Share2 className="w-4 h-4" /> Patient Portal Unavailable
                     </Button>
                 )}
                 <Button variant="outline" className="border-slate-700 bg-slate-900 text-slate-300 gap-2">
