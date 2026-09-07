@@ -5,6 +5,7 @@ Uses Gemini REST API directly (no SDK) to keep bundle size within Vercel's 500MB
 from __future__ import annotations
 
 import os
+import re
 import json
 import asyncio
 import httpx
@@ -20,7 +21,7 @@ OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL = "https://ollama.com/api"
 
 # Gemini REST API — no SDK needed, just httpx
-GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
+GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 # Groq REST API (OpenAI compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -30,6 +31,46 @@ class ExtractionResponse(BaseModel):
     data: dict | None = None
     error: str | None = None
     warning: str | None = None  # non-fatal: e.g. LLM quota hit, fell back to mock data
+
+
+# ── Scanned-PDF detection ─────────────────────────────────────────────────────
+# These PDFs have image content but pypdf only extracts watermark/metadata text
+# (e.g. "/Proclaim-20260520/uuid.PDF-20101-07.09.2026 12:41:29").
+# We detect that pattern and force fallback to OCR.
+
+_WATERMARK_LINE_RE = re.compile(
+    r"^/?[Pp]roclaim|"           # /Proclaim- prefix
+    r"[0-9a-f]{8}-[0-9a-f]{4}|" # UUID-like fragments
+    r"\.PDF-\d{5}-\d{2}\.\d{2}\.\d{4}",  # .PDF-NNNNN-DD.MM.YYYY
+    re.IGNORECASE,
+)
+
+
+def _is_meaningful_pdf_text(text: str) -> bool:
+    """
+    Returns True only if the extracted PDF text looks like real human-readable
+    content — NOT watermark / metadata noise from scanned PDFs.
+
+    Strategy: count lines that contain at least 3 consecutive ASCII letters
+    (i.e. a real word) and are NOT watermark patterns. If fewer than 40% of
+    non-empty lines pass this test, the text is considered garbage.
+    """
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    if not lines:
+        return False
+
+    real_lines = 0
+    for line in lines:
+        # Skip lines that match known watermark / path patterns
+        if _WATERMARK_LINE_RE.search(line):
+            continue
+        # A line with at least one 3+ letter word is considered real content
+        if re.search(r"[A-Za-z]{3,}", line):
+            real_lines += 1
+
+    ratio = real_lines / len(lines)
+    print(f"[report_extraction] PDF text quality: {real_lines}/{len(lines)} real lines ({ratio:.0%})")
+    return ratio >= 0.40
 
 
 def get_llm_prompt(ocr_text: str) -> str:
@@ -176,23 +217,41 @@ async def extract_report(file: UploadFile = File(...)):
             print(f"[report_extraction] PDF file detected — trying local extraction ({len(content)}B)")
             import pypdf
             import io
-            
+
+            ocr_text = ""  # Will be set below if we get real text
+
+            # ── Attempt 1: pypdf ──────────────────────────────────────────────
             try:
                 reader = pypdf.PdfReader(io.BytesIO(content))
-                extracted_pages = []
-                for page in reader.pages:
-                    extracted_pages.append(page.extract_text() or "")
-                
+                extracted_pages = [page.extract_text() or "" for page in reader.pages]
                 pdf_text = "\n".join(extracted_pages).strip()
-                if len(pdf_text) > 100:  # If we got meaningful text, skip OCR
-                    print(f"[report_extraction] Local PDF extraction successful ({len(pdf_text)} chars)")
+
+                if len(pdf_text) > 100 and _is_meaningful_pdf_text(pdf_text):
+                    print(f"[report_extraction] pypdf extraction successful ({len(pdf_text)} chars)")
                     ocr_text = pdf_text
                 else:
-                    print("[report_extraction] Local PDF extraction yielded little/no text, falling back to OCR")
+                    reason = "too short" if len(pdf_text) <= 100 else "watermark/noise only — scanned PDF detected"
+                    print(f"[report_extraction] pypdf text rejected ({reason})")
             except Exception as e:
-                print(f"[report_extraction] Local PDF extraction failed: {e}. Falling back to OCR")
-                
-        # ── Images / Scanned PDFs — need OCR ──
+                print(f"[report_extraction] pypdf failed: {e}")
+
+            # ── Attempt 2: PyMuPDF (fitz) — better at some PDFs ──────────────
+            if not ocr_text:
+                try:
+                    import fitz  # PyMuPDF
+                    doc = fitz.open(stream=content, filetype="pdf")
+                    pages_text = [page.get_text() for page in doc]
+                    fitz_text = "\n".join(pages_text).strip()
+
+                    if len(fitz_text) > 100 and _is_meaningful_pdf_text(fitz_text):
+                        print(f"[report_extraction] PyMuPDF extraction successful ({len(fitz_text)} chars)")
+                        ocr_text = fitz_text
+                    else:
+                        print("[report_extraction] PyMuPDF text also rejected — will use OCR")
+                except Exception as e:
+                    print(f"[report_extraction] PyMuPDF failed: {e}")
+
+        # ── Images / Scanned PDFs — need OCR ──────────────────────────────────
         if "ocr_text" not in locals() or not ocr_text:
             import base64
             b64 = base64.b64encode(content).decode("utf-8")
@@ -249,7 +308,7 @@ async def extract_report(file: UploadFile = File(...)):
     print(f"[report_extraction] Text ready — {len(ocr_text)} chars")
 
 
-    # ── Step 2: LLM — Groq primary, Gemini secondary, Ollama fallback ─────────────────────────
+    # ── Step 2: LLM — Groq primary, Gemini secondary, Ollama fallback ─────────
     try:
         llm_warning: str | None = None
         try:
@@ -270,18 +329,18 @@ async def extract_report(file: UploadFile = File(...)):
                         f"LLM extraction failed (Groq/Gemini/Ollama). Showing placeholder data — please fill fields manually."
                     )
                     structured_data = {
-                    "patient": {"name": "", "age": 0, "sex": ""},
-                    "tumour": {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
-                    "biomarkers": {
-                        "er_status": "Unknown", "pr_status": "Unknown", "her2_status": "Unknown",
-                        "ki67_percent": 0, "brca1_status": "Unknown", "brca2_status": "Unknown",
-                        "tils_percent": 0, "oncotype_dx_score": 0
-                    },
-                    "health": {
-                        "lvef_percent": 0, "ecog_score": 0,
-                        "comorbidities": [], "medications": []
+                        "patient": {"name": "", "age": 0, "sex": ""},
+                        "tumour": {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
+                        "biomarkers": {
+                            "er_status": "Unknown", "pr_status": "Unknown", "her2_status": "Unknown",
+                            "ki67_percent": 0, "brca1_status": "Unknown", "brca2_status": "Unknown",
+                            "tils_percent": 0, "oncotype_dx_score": 0
+                        },
+                        "health": {
+                            "lvef_percent": 0, "ecog_score": 0,
+                            "comorbidities": [], "medications": []
+                        }
                     }
-                }
 
         return ExtractionResponse(success=True, data=structured_data, warning=llm_warning)
 
