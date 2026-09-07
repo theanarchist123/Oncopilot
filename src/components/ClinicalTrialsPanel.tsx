@@ -123,6 +123,11 @@ export function ClinicalTrialsPanel({ caseId }: ClinicalTrialsPanelProps) {
                                         <RefreshCw className="w-3 h-3" /> Retry
                                     </button>
                                 </div>
+                            ) : !caseId ? (
+                                <div className="py-6 flex flex-col items-center justify-center gap-2 text-center text-slate-500">
+                                    <p className="text-sm">Trials unavailable (case not saved)</p>
+                                    <p className="text-xs opacity-75">You must be logged in and the case must be saved to the database to fetch live trial matches.</p>
+                                </div>
                             ) : trials.length === 0 ? (
                                 <p className="text-slate-500 text-sm text-center py-6">No recruiting trials matched the current patient profile.</p>
                             ) : (

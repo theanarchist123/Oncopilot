@@ -198,6 +198,9 @@ export default function NewCaseForm() {
 
             const data = (result as any)?.data || result;
             console.log("[OncoPilot] Analysis result:", data?.molecular_subtype, `(${Math.round((data?.subtype_confidence || 0) * 100)}%)`, `${data?.recommendations?.length ?? 0} paths`);
+            if (data?.case_save_error) {
+                console.warn("[OncoPilot] Server failed to save case to DB:", data.case_save_error);
+            }
 
             setAnalysisResult({
                 ...data,

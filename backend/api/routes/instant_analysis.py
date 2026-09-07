@@ -48,6 +48,7 @@ class InstantAnalysisResponse(BaseModel):
     patient_name: Optional[str] = None
     patient_age: Optional[int] = None
     case_id: Optional[uuid.UUID] = None
+    case_save_error: Optional[str] = None
 
 
 @router.post("/instant", response_model=InstantAnalysisResponse)
@@ -113,6 +114,7 @@ async def instant_analysis(
     )
 
     case_id_out = None
+    case_save_error = None
     if body.save_case and _creds is not None:
         try:
             from core.security import decode_token
@@ -148,7 +150,10 @@ async def instant_analysis(
                 await save_result(db, case.id, sim_result, is_simulation=False, doctor_id=user.id)
                 case.status = "under_analysis"
                 await db.commit()
+            else:
+                case_save_error = "User not found in database."
         except Exception as e:
+            case_save_error = str(e)
             print("Auto-save case failed:", e)
 
     return InstantAnalysisResponse(
@@ -165,4 +170,5 @@ async def instant_analysis(
         patient_name=body.patient_name,
         patient_age=body.patient_age,
         case_id=case_id_out,
+        case_save_error=case_save_error,
     )
