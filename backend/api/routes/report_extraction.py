@@ -15,11 +15,14 @@ router = APIRouter(prefix="/api/reports", tags=["report-extraction"])
 
 OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "helloworld")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL = "https://ollama.com/api"
 
 # Gemini REST API — no SDK needed, just httpx
 GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
+# Groq REST API (OpenAI compatible)
+GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 class ExtractionResponse(BaseModel):
@@ -107,6 +110,29 @@ async def extract_with_gemini(text: str) -> dict:
 
     data = await _call_gemini(GEMINI_REST_URL, payload)
     return _parse_gemini_response(data)
+
+async def extract_with_groq(text: str) -> dict:
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY not configured")
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        res = await client.post(
+            GROQ_REST_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": get_llm_prompt(text)}],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.1
+            }
+        )
+        res.raise_for_status()
+        result = res.json()
+        content = result["choices"][0]["message"]["content"]
+        return json.loads(content.strip())
 
 
 async def extract_with_ollama(text: str) -> dict:
@@ -223,23 +249,27 @@ async def extract_report(file: UploadFile = File(...)):
     print(f"[report_extraction] Text ready — {len(ocr_text)} chars")
 
 
-    # ── Step 2: LLM — Gemini primary, Ollama fallback ─────────────────────────
+    # ── Step 2: LLM — Groq primary, Gemini secondary, Ollama fallback ─────────────────────────
     try:
         llm_warning: str | None = None
         try:
-            structured_data = await extract_with_gemini(ocr_text)
-        except Exception as e_gemini:
-            print(f"[report_extraction] Gemini failed: {e_gemini}. Trying Ollama...")
+            structured_data = await extract_with_groq(ocr_text)
+        except Exception as e_groq:
+            print(f"[report_extraction] Groq failed: {e_groq}. Trying Gemini...")
             try:
-                structured_data = await extract_with_ollama(ocr_text)
-                llm_warning = f"Gemini unavailable ({type(e_gemini).__name__}: {str(e_gemini)[:120]}). Used Ollama fallback."
-            except Exception as e_ollama:
-                print(f"[report_extraction] Ollama also failed: {e_ollama}. Using mock data.")
-                llm_warning = (
-                    f"LLM extraction failed (Gemini: {str(e_gemini)[:80]} | "
-                    f"Ollama: {str(e_ollama)[:80]}). Showing placeholder data — please fill fields manually."
-                )
-                structured_data = {
+                structured_data = await extract_with_gemini(ocr_text)
+                llm_warning = f"Groq unavailable ({type(e_groq).__name__}: {str(e_groq)[:120]}). Used Gemini fallback."
+            except Exception as e_gemini:
+                print(f"[report_extraction] Gemini failed: {e_gemini}. Trying Ollama...")
+                try:
+                    structured_data = await extract_with_ollama(ocr_text)
+                    llm_warning = f"Groq & Gemini unavailable. Used Ollama fallback."
+                except Exception as e_ollama:
+                    print(f"[report_extraction] Ollama also failed: {e_ollama}. Using mock data.")
+                    llm_warning = (
+                        f"LLM extraction failed (Groq/Gemini/Ollama). Showing placeholder data — please fill fields manually."
+                    )
+                    structured_data = {
                     "patient": {"name": "", "age": 0, "sex": ""},
                     "tumour": {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
                     "biomarkers": {

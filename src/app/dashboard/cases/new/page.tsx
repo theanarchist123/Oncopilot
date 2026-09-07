@@ -274,8 +274,8 @@ export default function NewCaseForm() {
                     <div className="flex items-start gap-3">
                         <TriangleAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                         <div>
-                            <p className="text-amber-300 font-semibold text-sm">AI extraction failed — Gemini quota exhausted</p>
-                            <p className="text-amber-400/80 text-xs mt-1">OCR ran but the AI could not parse the report. Please enter the clinical fields manually.</p>
+                            <p className="text-amber-300 font-semibold text-sm">AI extraction failed</p>
+                            <p className="text-amber-400/80 text-xs mt-1">{uploadWarning}</p>
                         </div>
                     </div>
                     <Button
