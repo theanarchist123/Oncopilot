@@ -123,7 +123,7 @@ async def extract_with_groq(text: str) -> dict:
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama3-70b-8192",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": get_llm_prompt(text)}],
                 "response_format": {"type": "json_object"},
                 "temperature": 0.1
