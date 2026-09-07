@@ -303,15 +303,15 @@ const DoctorFinalizationPanel = ({ caseId, recommendations }: { caseId: string |
     const [loading, setLoading] = useState(false);
     const [finalized, setFinalized] = useState(false);
 
-    if (!caseId) return null; // Can't finalize if case is not saved
     if (finalized) return (
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl flex items-center justify-center gap-3 text-emerald-400">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl flex items-center justify-center gap-3 text-emerald-400 mt-8">
             <CheckCircle2 className="w-6 h-6" />
             <span className="font-bold">Treatment Plan Finalized Successfully</span>
         </motion.div>
     );
 
     const submit = async () => {
+        if (!caseId) return;
         setLoading(true);
         try {
             await api.finalizeCase(caseId, {
@@ -325,6 +325,26 @@ const DoctorFinalizationPanel = ({ caseId, recommendations }: { caseId: string |
         }
         setLoading(false);
     };
+
+    // Case was not saved to DB (e.g. weak network during analysis) — show degraded state
+    if (!caseId) return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="p-6 rounded-2xl bg-slate-900 border border-slate-700 space-y-4 mt-8">
+            <h2 className="font-bold text-white flex items-center gap-2">
+                <Stethoscope className="w-5 h-5 text-[#0891B2]" /> Doctor Finalization
+            </h2>
+            <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                    <Stethoscope className="w-6 h-6 text-amber-400" />
+                </div>
+                <p className="text-slate-300 text-sm font-medium">Finalization unavailable — case was not saved</p>
+                <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
+                    This case could not be saved to the database, likely due to a weak network connection during analysis.
+                    Please re-run the analysis on a stronger connection to enable signing and finalizing the treatment plan.
+                </p>
+            </div>
+        </motion.div>
+    );
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="p-6 rounded-2xl bg-slate-900 border border-[#0891B2]/30 space-y-6 mt-8">
@@ -667,11 +687,11 @@ function ResultsContent() {
                 </motion.div>
             </div>
 
-            {/* Clinical Trials Matcher */}
-            {currentResult.case_id && <ClinicalTrialsPanel caseId={currentResult.case_id} />}
+            {/* Clinical Trials Matcher — always shown; handles missing case_id internally */}
+            <ClinicalTrialsPanel caseId={currentResult.case_id ?? null} />
 
-            {/* Doctor Finalization */}
-            {currentResult.case_id && <DoctorFinalizationPanel caseId={currentResult.case_id} recommendations={recs} />}
+            {/* Doctor Finalization — always shown; handles missing case_id internally */}
+            <DoctorFinalizationPanel caseId={currentResult.case_id ?? null} recommendations={recs} />
 
             {/* Footer */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
