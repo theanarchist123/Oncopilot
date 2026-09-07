@@ -243,16 +243,22 @@ export interface AnalysisResult {
 
 interface AnalysisResultState {
   result: AnalysisResult | null;
+  // Trials cache: keyed by case_id, so data persists after first load
+  trialsCache: Record<string, any[]>;
   setResult: (r: AnalysisResult) => void;
   clearResult: () => void;
+  setTrialsCache: (caseId: string, trials: any[]) => void;
 }
 
 export const useAnalysisResultStore = create<AnalysisResultState>()(
   persist(
     (set) => ({
       result: null,
+      trialsCache: {},
       setResult: (result) => set({ result }),
       clearResult: () => set({ result: null }),
+      setTrialsCache: (caseId, trials) =>
+        set((s) => ({ trialsCache: { ...s.trialsCache, [caseId]: trials } })),
     }),
     { name: "cancer-copilot-analysis-result" }
   )

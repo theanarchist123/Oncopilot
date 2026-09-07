@@ -4,35 +4,64 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Network, Microscope, ExternalLink, ChevronDown, CheckCircle2, WifiOff, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAnalysisResultStore } from "@/store";
 
 interface ClinicalTrialsPanelProps {
     caseId: string | null;
 }
 
 export function ClinicalTrialsPanel({ caseId }: ClinicalTrialsPanelProps) {
-    const [trials, setTrials] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    const trialsCache = useAnalysisResultStore((s) => s.trialsCache);
+    const setTrialsCache = useAnalysisResultStore((s) => s.setTrialsCache);
+
+    // Read from cache first — data persists across page loads / weak network visits
+    const cached = caseId ? (trialsCache[caseId] ?? null) : null;
+
+    const [trials, setTrials] = useState<any[]>(cached ?? []);
+    const [loading, setLoading] = useState(cached === null && !!caseId); // only load if not cached
     const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(true);
-    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
-        if (!caseId) return; // no case saved yet — stay in "offline" state
+        if (!caseId) return;
+        if (cached !== null) {
+            // Cache hit — no network needed
+            setTrials(cached);
+            setLoading(false);
+            return;
+        }
+        // Cache miss — fetch once and store permanently
         setLoading(true);
         setError(null);
         api.getTrials(caseId)
             .then(data => {
-                setTrials(data.data || []);
+                const fetched = data.data || [];
+                setTrials(fetched);
+                setTrialsCache(caseId, fetched); // persist to localStorage
             })
             .catch(err => {
                 console.error("Failed to fetch trials", err);
                 setError("Could not load trial data. Check your connection and retry.");
             })
             .finally(() => setLoading(false));
-    }, [caseId, retryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [caseId]); // intentionally exclude cached/setTrialsCache — run once per caseId
 
     const handleRetry = () => {
-        setRetryCount(c => c + 1);
+        if (!caseId) return;
+        setLoading(true);
+        setError(null);
+        api.getTrials(caseId)
+            .then(data => {
+                const fetched = data.data || [];
+                setTrials(fetched);
+                setTrialsCache(caseId, fetched);
+            })
+            .catch(err => {
+                console.error("Failed to fetch trials", err);
+                setError("Still unable to reach ClinicalTrials.gov. Try again later.");
+            })
+            .finally(() => setLoading(false));
     };
 
     return (
@@ -52,9 +81,9 @@ export function ClinicalTrialsPanel({ caseId }: ClinicalTrialsPanelProps) {
                                 {trials.length} matches
                             </span>
                         )}
-                        {!caseId && (
-                            <span className="text-xs bg-slate-700/50 text-slate-400 border border-slate-600/30 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
-                                <WifiOff className="w-3 h-3" /> Not saved
+                        {cached !== null && (
+                            <span className="text-xs bg-slate-700/50 text-slate-500 border border-slate-600/30 px-2 py-0.5 rounded-full font-mono">
+                                cached
                             </span>
                         )}
                     </h2>
@@ -75,20 +104,7 @@ export function ClinicalTrialsPanel({ caseId }: ClinicalTrialsPanelProps) {
                         className="overflow-hidden"
                     >
                         <div className="rounded-b-2xl border-x border-b border-indigo-500/20 bg-slate-900/40 p-5 space-y-4">
-                            {/* No case_id — case was not saved to DB (weak network during analysis) */}
-                            {!caseId ? (
-                                <div className="py-8 flex flex-col items-center justify-center gap-3 text-center">
-                                    <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                                        <WifiOff className="w-6 h-6 text-slate-500" />
-                                    </div>
-                                    <p className="text-slate-400 text-sm font-medium">
-                                        Clinical trial matching requires this case to be saved.
-                                    </p>
-                                    <p className="text-slate-500 text-xs max-w-sm">
-                                        This case was not saved to the database — likely due to a weak network connection during analysis. Re-run the analysis on a stronger connection to enable this feature.
-                                    </p>
-                                </div>
-                            ) : loading ? (
+                            {loading ? (
                                 <div className="py-8 flex flex-col items-center justify-center text-indigo-400/70 gap-3">
                                     <Network className="w-8 h-8 animate-pulse" />
                                     <p className="text-sm font-mono tracking-widest uppercase">Querying ClinicalTrials.gov...</p>
@@ -99,6 +115,7 @@ export function ClinicalTrialsPanel({ caseId }: ClinicalTrialsPanelProps) {
                                         <WifiOff className="w-6 h-6 text-rose-400" />
                                     </div>
                                     <p className="text-slate-400 text-sm font-medium">{error}</p>
+                                    <p className="text-slate-500 text-xs">Trial data will be cached after a successful load — you won&apos;t need internet for this again.</p>
                                     <button
                                         onClick={handleRetry}
                                         className="flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/30 hover:border-indigo-500/60 px-3 py-1.5 rounded-lg"

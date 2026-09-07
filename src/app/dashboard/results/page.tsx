@@ -240,8 +240,6 @@ function PathCard({ rec, rank, isExpanded, onToggle }: {
 }
 
 const PrognosticScores = ({ scores }: { scores: any }) => {
-    // Show a graceful unavailable state instead of hiding the section entirely
-    // (scores can be null when API times out on weak network)
     const hasScores = scores && (scores.npi || scores.cts5);
     if (!hasScores) return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="space-y-4">
@@ -251,7 +249,7 @@ const PrognosticScores = ({ scores }: { scores: any }) => {
                     <div key={title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 min-h-[200px] text-center">
                         <Gauge className="w-8 h-8 text-slate-600" />
                         <p className="text-slate-500 text-sm font-medium">{title}</p>
-                        <p className="text-slate-600 text-xs">Score unavailable — risk data was not returned by the analysis engine.</p>
+                        <p className="text-slate-600 text-xs">Not computed for this analysis — insufficient staging or grade data provided.</p>
                     </div>
                 ))}
             </div>
@@ -342,7 +340,7 @@ const DoctorFinalizationPanel = ({ caseId, recommendations }: { caseId: string |
         setLoading(false);
     };
 
-    // Case was not saved to DB (e.g. weak network during analysis) — show degraded state
+    // Case was not persisted to DB during analysis (backend auto-save failed)
     if (!caseId) return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="p-6 rounded-2xl bg-slate-900 border border-slate-700 space-y-4 mt-8">
@@ -353,10 +351,10 @@ const DoctorFinalizationPanel = ({ caseId, recommendations }: { caseId: string |
                 <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
                     <Stethoscope className="w-6 h-6 text-amber-400" />
                 </div>
-                <p className="text-slate-300 text-sm font-medium">Finalization unavailable — case was not saved</p>
+                <p className="text-slate-300 text-sm font-medium">Finalization unavailable</p>
                 <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
-                    This case could not be saved to the database, likely due to a weak network connection during analysis.
-                    Please re-run the analysis on a stronger connection to enable signing and finalizing the treatment plan.
+                    This analysis was not saved to the database (the case record was not created).
+                    Re-run the analysis while logged in to enable signing and finalizing the treatment plan.
                 </p>
             </div>
         </motion.div>
