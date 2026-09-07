@@ -410,9 +410,9 @@ function ResultsContent() {
 
     const cfg = SUBTYPE_CFG[currentResult.molecular_subtype] ?? DEFAULT_CFG;
     const ai = currentResult.ai_reasoning ?? {};
-    const recs = Array.isArray(currentResult.recommendations) ? currentResult.recommendations : [];
-    const alerts = Array.isArray(currentResult.alerts) ? currentResult.alerts : [];
-    const ruleTrace = Array.isArray(currentResult.rule_trace) ? currentResult.rule_trace : [];
+    const recs: any[] = Array.isArray(currentResult.recommendations) ? currentResult.recommendations : [];
+    const alerts: any[] = Array.isArray(currentResult.alerts) ? currentResult.alerts : [];
+    const ruleTrace: any[] = Array.isArray(currentResult.rule_trace) ? currentResult.rule_trace : [];
     const safetyAlerts = alerts.filter((a: any) => a?.alert_type !== "DDI");
     const ddiAlerts = alerts.filter((a: any) => a?.alert_type === "DDI");
 
@@ -547,7 +547,7 @@ function ResultsContent() {
                                 {recs.length === 0 ? (
                                     <p className="text-slate-500 text-sm text-center py-6">No treatment paths generated for this profile.</p>
                                 ) : (
-                                    recs.map((rec, i) => (
+                                    recs.map((rec: any, i: number) => (
                                         <PathCard
                                             key={i}
                                             rec={rec}
