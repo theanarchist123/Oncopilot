@@ -196,11 +196,15 @@ export default function NewCaseForm() {
                 api.instantAnalysis(payload),
             ]);
 
-            console.log("[OncoPilot] Analysis result:", result.molecular_subtype, `(${Math.round(result.subtype_confidence * 100)}%)`, `${result.recommendations?.length} paths`);
+            const data = (result as any)?.data || result;
+            console.log("[OncoPilot] Analysis result:", data?.molecular_subtype, `(${Math.round((data?.subtype_confidence || 0) * 100)}%)`, `${data?.recommendations?.length ?? 0} paths`);
 
             setAnalysisResult({
-                ...result,
-                analyzed_at: new Date().toISOString(),
+                ...data,
+                alerts: Array.isArray(data?.alerts) ? data.alerts : [],
+                rule_trace: Array.isArray(data?.rule_trace) ? data.rule_trace : [],
+                recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
+                analyzed_at: data?.analyzed_at || new Date().toISOString(),
             });
 
             router.push("/dashboard/results");

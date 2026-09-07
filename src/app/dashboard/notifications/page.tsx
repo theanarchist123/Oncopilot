@@ -16,7 +16,7 @@ export default function NotificationsPage() {
     
     const [filter, setFilter] = useState("All");
 
-    const filtered = notifications.filter(n => {
+    const filtered = (notifications || []).filter(n => {
         if (filter === "Unread") return !n.isRead;
         if (filter === "Alerts") return n.type === "alert";
         if (filter === "Messages") return n.type === "second_opinion"; // Treating second opinion as messages for demo

@@ -377,8 +377,14 @@ function ResultsContent() {
         if (!result && caseId) {
             setLoadingAnalysis(true);
             api.runAnalysis(caseId).then((res) => {
-                // backend already returns full analysis result shape expected by the UI
-                setResult({ ...res, analyzed_at: new Date().toISOString() });
+                const data = res?.data || res;
+                setResult({
+                    ...data,
+                    alerts: Array.isArray(data?.alerts) ? data.alerts : [],
+                    rule_trace: Array.isArray(data?.rule_trace) ? data.rule_trace : [],
+                    recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
+                    analyzed_at: data?.analyzed_at || new Date().toISOString()
+                });
             }).catch((err) => {
                 console.error("Failed to load analysis for case", caseId, err);
                 // If analysis failed, fall back to case detail page
@@ -397,9 +403,18 @@ function ResultsContent() {
         return null;
     }
 
-    const cfg = SUBTYPE_CFG[result.molecular_subtype] ?? DEFAULT_CFG;
-    const ai = result.ai_reasoning ?? {};
-    const recs = result.recommendations ?? [];
+    // Normalize result in case response was nested under `data`
+    const currentResult: any = (result as any)?.data && typeof (result as any).data === "object"
+        ? { ...(result as any).data, analyzed_at: result.analyzed_at || (result as any).data.analyzed_at }
+        : result;
+
+    const cfg = SUBTYPE_CFG[currentResult.molecular_subtype] ?? DEFAULT_CFG;
+    const ai = currentResult.ai_reasoning ?? {};
+    const recs = Array.isArray(currentResult.recommendations) ? currentResult.recommendations : [];
+    const alerts = Array.isArray(currentResult.alerts) ? currentResult.alerts : [];
+    const ruleTrace = Array.isArray(currentResult.rule_trace) ? currentResult.rule_trace : [];
+    const safetyAlerts = alerts.filter((a: any) => a?.alert_type !== "DDI");
+    const ddiAlerts = alerts.filter((a: any) => a?.alert_type === "DDI");
 
     const togglePath = (i: number) =>
         setExpandedPaths(prev => ({ ...prev, [i]: !prev[i] }));
@@ -426,19 +441,19 @@ function ResultsContent() {
                                 AI-Enhanced · {recs[0]?.guideline_source ?? "NCCN"} Aligned
                             </span>
                         </div>
-                        <h1 className={`text-4xl md:text-5xl font-black ${cfg.color} mb-1`}>{result.molecular_subtype}</h1>
+                        <h1 className={`text-4xl md:text-5xl font-black ${cfg.color} mb-1`}>{currentResult.molecular_subtype || "Analysis Complete"}</h1>
                         <p className="text-slate-400 text-sm font-mono">{cfg.short}</p>
-                        {result.patient_name && (
+                        {currentResult.patient_name && (
                             <p className="text-slate-300 mt-3 font-medium">
-                                Patient: <span className="text-white">{result.patient_name}</span>
-                                {result.patient_age && <span className="text-slate-400">, {result.patient_age} yrs</span>}
+                                Patient: <span className="text-white">{currentResult.patient_name}</span>
+                                {currentResult.patient_age && <span className="text-slate-400">, {currentResult.patient_age} yrs</span>}
                             </p>
                         )}
                         <p className="text-xs text-slate-600 mt-1">
-                            Analyzed {new Date(result.analyzed_at).toLocaleString()}
+                            Analyzed {currentResult.analyzed_at ? new Date(currentResult.analyzed_at).toLocaleString() : new Date().toLocaleString()}
                         </p>
                     </div>
-                    <ConfidenceRing value={result.subtype_confidence} />
+                    <ConfidenceRing value={currentResult.subtype_confidence ?? 0} />
                 </div>
             </motion.div>
 
@@ -492,7 +507,7 @@ function ResultsContent() {
             </div>
 
             {/* ── Prognostic Scores ── */}
-            <PrognosticScores scores={result.risk_scores} />
+            <PrognosticScores scores={currentResult.risk_scores} />
 
             {/* ══ AI SIMULATION PANEL ══════════════════════════════════════════════ */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -558,20 +573,20 @@ function ResultsContent() {
                         </div>
                         <h2 className="font-semibold text-white">Safety Alerts</h2>
                         <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-mono ${
-                            result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0
+                            safetyAlerts.length === 0
                                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                 : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                         }`}>
-                            {result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0 ? "✓ None" : `${result.alerts.filter((a: any) => a.alert_type !== "DDI").length} alert${result.alerts.filter((a: any) => a.alert_type !== "DDI").length > 1 ? "s" : ""}`}
+                            {safetyAlerts.length === 0 ? "✓ None" : `${safetyAlerts.length} alert${safetyAlerts.length > 1 ? "s" : ""}`}
                         </span>
                     </div>
-                    {result.alerts.filter((a: any) => a.alert_type !== "DDI").length === 0 ? (
+                    {safetyAlerts.length === 0 ? (
                         <div className="flex items-center gap-3 text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-sm">
                             <CheckCircle2 className="w-5 h-5 shrink-0" />
                             No contraindications or safety alerts for this patient profile.
                         </div>
                     ) : (
-                        result.alerts.filter((a: any) => a.alert_type !== "DDI").map((a: any, i: number) => (
+                        safetyAlerts.map((a: any, i: number) => (
                             <div key={i} className="flex gap-3 p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl text-sm">
                                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                                 <div>
@@ -591,7 +606,7 @@ function ResultsContent() {
                 </motion.div>
 
                 {/* Drug-Drug Interactions */}
-                {result.alerts.filter((a: any) => a.alert_type === "DDI").length > 0 && (
+                {ddiAlerts.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
                         className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 md:col-span-2">
                         <div className="flex items-center gap-2">
@@ -600,11 +615,11 @@ function ResultsContent() {
                             </div>
                             <h2 className="font-semibold text-white">Drug-Drug Interactions (DDI)</h2>
                             <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-mono bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                                {result.alerts.filter((a: any) => a.alert_type === "DDI").length} DDI{result.alerts.filter((a: any) => a.alert_type === "DDI").length > 1 ? "s" : ""}
+                                {ddiAlerts.length} DDI{ddiAlerts.length > 1 ? "s" : ""}
                             </span>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
-                            {result.alerts.filter((a: any) => a.alert_type === "DDI").map((a: any, i: number) => (
+                            {ddiAlerts.map((a: any, i: number) => (
                                 <div key={i} className="flex gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-2 text-[10px] font-bold tracking-widest text-orange-500/50 uppercase">{a.severity}</div>
                                     <Pill className="w-5 h-5 text-orange-400 shrink-0 mt-1" />
@@ -626,39 +641,43 @@ function ResultsContent() {
                         </div>
                         <h2 className="font-semibold text-white">Classification Logic</h2>
                     </div>
-                    {result.rule_trace.map((r, i) => (
-                        <div key={i} className="flex items-start gap-3 py-2 border-b border-slate-800 last:border-0">
-                            <div className="w-5 h-5 rounded-full bg-[#0891B2]/10 border border-[#0891B2]/30 flex items-center justify-center shrink-0 mt-0.5">
-                                <span className="text-xs text-[#0891B2] font-bold">{i + 1}</span>
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono font-bold text-slate-300">{r.label}</span>
-                                    {r.value && <span className="text-xs font-mono text-[#0891B2] bg-[#0891B2]/10 px-1.5 py-0.5 rounded">{r.value}</span>}
+                    {ruleTrace.length === 0 ? (
+                        <p className="text-xs text-slate-500 py-2">No classification rules recorded.</p>
+                    ) : (
+                        ruleTrace.map((r: any, i: number) => (
+                            <div key={i} className="flex items-start gap-3 py-2 border-b border-slate-800 last:border-0">
+                                <div className="w-5 h-5 rounded-full bg-[#0891B2]/10 border border-[#0891B2]/30 flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className="text-xs text-[#0891B2] font-bold">{i + 1}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-0.5">{r.conclusion}</p>
-                                {r.label === "Ki-67" && parseFloat(r.value || "0") >= 15 && parseFloat(r.value || "0") <= 25 && (
-                                    <div className="mt-2 text-xs text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
-                                        ⚠️ Borderline Ki-67 — genomic assay (OncotypeDX/MammaPrint) recommended for confirmation
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono font-bold text-slate-300">{r.label || r.biomarker}</span>
+                                        {r.value && <span className="text-xs font-mono text-[#0891B2] bg-[#0891B2]/10 px-1.5 py-0.5 rounded">{r.value}</span>}
                                     </div>
-                                )}
+                                    <p className="text-xs text-slate-500 mt-0.5">{r.conclusion || r.implication}</p>
+                                    {r.label === "Ki-67" && parseFloat(r.value || "0") >= 15 && parseFloat(r.value || "0") <= 25 && (
+                                        <div className="mt-2 text-xs text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                                            ⚠️ Borderline Ki-67 — genomic assay (OncotypeDX/MammaPrint) recommended for confirmation
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </motion.div>
             </div>
 
             {/* Clinical Trials Matcher */}
-            {result.case_id && <ClinicalTrialsPanel caseId={result.case_id} />}
+            {currentResult.case_id && <ClinicalTrialsPanel caseId={currentResult.case_id} />}
 
             {/* Doctor Finalization */}
-            {result.case_id && <DoctorFinalizationPanel caseId={result.case_id} recommendations={recs} />}
+            {currentResult.case_id && <DoctorFinalizationPanel caseId={currentResult.case_id} recommendations={recs} />}
 
             {/* Footer */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="flex flex-wrap gap-3 justify-end pt-4 border-t border-slate-800">
-                {result.case_id && (
-                    <Button variant="outline" onClick={() => window.open(`/patient?caseId=${result.case_id}`, '_blank')} className="border-slate-700 bg-slate-900 text-slate-300 gap-2 mr-auto">
+                {currentResult.case_id && (
+                    <Button variant="outline" onClick={() => window.open(`/patient?caseId=${currentResult.case_id}`, '_blank')} className="border-slate-700 bg-slate-900 text-slate-300 gap-2 mr-auto">
                         <Share2 className="w-4 h-4 text-[#0891B2]" /> Open Patient Portal
                     </Button>
                 )}

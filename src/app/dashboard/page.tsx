@@ -56,9 +56,9 @@ export default function DashboardPage() {
     fetchCases();
   }, [fetchCases]);
 
-  const filteredCases = cases.filter(c => {
+  const filteredCases = (cases || []).filter(c => {
      if (filter !== "All" && c.status !== filter && c.subtype !== filter) return false;
-     if (search && !c.patientName.toLowerCase().includes(search.toLowerCase())) return false;
+     if (search && !c.patientName?.toLowerCase().includes(search.toLowerCase())) return false;
      return true;
   });
 
