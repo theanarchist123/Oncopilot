@@ -12,17 +12,19 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/oncopilot_app_icon_192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/oncopilot_app_icon_512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/maskable-icon.png",
+      "src": "/oncopilot_app_icon_512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
