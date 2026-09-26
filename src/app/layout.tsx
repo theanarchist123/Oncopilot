@@ -11,8 +11,17 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mon
 export const metadata: Metadata = {
   title: "OnCopilot | Clinical Decision Support System",
   description: "Treatment Intelligence for Oncology. Advanced decision-support system for precise, guideline-based recommendations.",
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
+    apple: "/icons/icon-192.png",
+  },
+  themeColor: "#07091C",
+  viewport: "minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, user-scalable=no, viewport-fit=cover",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "OnCopilot",
   },
 };
 
@@ -33,6 +42,23 @@ export default function RootLayout({
           {children}
           <Toaster richColors position="top-right" />
         </ThemeProvider>
+        
+        {/* Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                  }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

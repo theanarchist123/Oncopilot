@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ChevronRight, Activity, ShieldCheck, ShieldAlert,
@@ -55,6 +56,15 @@ const Tag = ({ children }: { children: React.ReactNode }) => (
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Basic mobile detection
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      router.push("/mobile");
+    }
+  }, [router]);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", fn);
