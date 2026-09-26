@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Activity, ArrowRight, ArrowLeft } from "lucide-react";
@@ -18,6 +18,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      window.location.href = '/mobile/login';
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

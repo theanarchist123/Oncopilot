@@ -26,6 +26,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
+  // Redirect mobile users to mobile app shell
+  React.useEffect(() => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      if (!pathname.startsWith('/m')) {
+        window.location.href = '/m';
+      }
+    }
+  }, [pathname]);
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}

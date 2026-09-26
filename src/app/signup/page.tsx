@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,12 @@ export default function SignupPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [role, setRole] = useState<"doctor" | "patient" | null>(null);
+
+  useEffect(() => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      window.location.href = '/mobile/signup';
+    }
+  }, []);
 
   // Form states
   const [firstName, setFirstName] = useState("");

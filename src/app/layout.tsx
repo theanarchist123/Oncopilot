@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description: "Treatment Intelligence for Oncology. Advanced decision-support system for precise, guideline-based recommendations.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/icons/icon-192.png",
+    icon: "/oncopilot_app_icon_192.png",
+    apple: "/oncopilot_app_icon_192.png",
   },
   themeColor: "#07091C",
   viewport: "minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, user-scalable=no, viewport-fit=cover",
