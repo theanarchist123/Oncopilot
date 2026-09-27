@@ -408,7 +408,10 @@ function ResultsContent() {
     const [simulationOpen, setSimulationOpen] = useState(true);
 
     useEffect(() => {
-        if (!result && caseId) {
+        if (caseId) {
+            // Always fetch fresh from the API when a caseId is in the URL.
+            // This prevents the previously cached store result from being shown
+            // for a different patient.
             setLoadingAnalysis(true);
             api.runAnalysis(caseId).then((res) => {
                 const data = res?.data || res;
@@ -421,21 +424,20 @@ function ResultsContent() {
                 });
             }).catch((err) => {
                 console.error("Failed to load analysis for case", caseId, err);
-                // If analysis failed, fall back to case detail page
                 router.replace(`/dashboard/cases/${caseId}`);
             }).finally(() => setLoadingAnalysis(false));
-        } else if (!result && !caseId) {
+        } else if (!result) {
+            // No caseId and no store result — redirect to new case
             if (typeof window !== "undefined") router.replace("/dashboard/cases/new");
         }
-    }, [caseId, result, setResult, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [caseId]); // intentionally only re-run when caseId changes, not on store result changes
 
-    if (!result && loadingAnalysis) {
-        return <div className="p-20 text-center">Loading AI report...</div>;
+    if (loadingAnalysis) {
+        return <div className="p-20 text-center text-slate-400">Loading AI report...</div>;
     }
 
-    if (!result) {
-        return null;
-    }
+    if (!result) return null;
 
     // Normalize result in case response was nested under `data`
     const currentResult: any = (result as any)?.data && typeof (result as any).data === "object"
