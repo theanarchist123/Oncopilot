@@ -9,12 +9,12 @@ export default function MobileDashboardLayout({ children }: { children: React.Re
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#07091C] text-white overflow-hidden">
+    <div className="flex flex-col h-[100dvh] mobile-atmosphere text-white overflow-hidden">
       {/* Mobile Top Bar */}
-      <header className="h-16 shrink-0 flex items-center justify-between px-6 bg-[#0D1220] border-b border-white/5 z-40">
+      <header className="h-[4.25rem] shrink-0 flex items-center justify-between px-5 bg-[#0b1220]/90 backdrop-blur-xl border-b border-white/8 z-40">
         <div className="flex items-center gap-2">
-          <Activity className="w-6 h-6 text-[#0891B2]" />
-          <span className="font-bold text-xl tracking-tight text-white">On<span className="text-[#0891B2]">Copilot</span></span>
+          <Activity className="w-5 h-5 text-[#67C9E8]" />
+          <span className="font-bold text-lg tracking-tight text-white">On<span className="text-[#67C9E8]">Copilot</span></span>
         </div>
         
         <div className="flex items-center gap-4">
@@ -26,7 +26,7 @@ export default function MobileDashboardLayout({ children }: { children: React.Re
               </span>
             )}
           </button>
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-[#163b4c] border border-[#67C9E8]/30 flex items-center justify-center text-xs font-bold shadow-sm">
             PS
           </div>
         </div>

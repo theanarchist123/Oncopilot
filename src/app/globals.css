@@ -310,6 +310,40 @@
       radial-gradient(at 79% 53%, hsla(199, 89%, 37%, 0.06) 0px, transparent 50%);
   }
 
+  .mobile-atmosphere {
+    background:
+      linear-gradient(145deg, rgba(8, 145, 178, 0.08), transparent 38%),
+      radial-gradient(circle at 88% 8%, rgba(103, 201, 232, 0.1), transparent 25%),
+      #07091c;
+  }
+
+  .mobile-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+
+  .mobile-surface {
+    background: linear-gradient(155deg, rgba(20, 31, 48, 0.94), rgba(10, 16, 30, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24), inset 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  .mobile-image-wash {
+    background: linear-gradient(180deg, rgba(7, 9, 28, 0.14), #07091c 92%),
+      linear-gradient(90deg, rgba(7, 9, 28, 0.82), transparent 70%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   .animation-delay-100 { animation-delay: 100ms; }
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-300 { animation-delay: 300ms; }

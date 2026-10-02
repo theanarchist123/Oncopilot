@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { FlaskConical, ShieldCheck, Activity, ChevronRight } from "lucide-react";
+import { FlaskConical, ShieldCheck, Activity, ChevronRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -47,7 +47,7 @@ export default function MobileOnboarding() {
   const Icon = slide.icon;
 
   return (
-    <div className="relative h-[100dvh] w-full bg-[#07091C] overflow-hidden flex flex-col">
+    <div className="relative h-[100dvh] w-full mobile-atmosphere overflow-hidden flex flex-col">
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
@@ -62,9 +62,14 @@ export default function MobileOnboarding() {
             alt={slide.title}
             className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#07091C]/60 to-[#07091C] pt-20" />
+          <div className="absolute inset-0 mobile-image-wash" />
         </motion.div>
       </AnimatePresence>
+
+      <div className="absolute top-9 left-6 z-20 flex items-center gap-2">
+        <Activity className="w-5 h-5 text-[#67C9E8]" />
+        <span className="text-white font-bold tracking-tight">On<span className="text-[#67C9E8]">Copilot</span></span>
+      </div>
 
       {/* Skip Button */}
       <div className="absolute top-10 right-6 z-20">
@@ -82,16 +87,17 @@ export default function MobileOnboarding() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="glass-dark p-8 rounded-3xl w-full border border-white/10 relative overflow-hidden"
+            className="mobile-surface p-7 rounded-[1.75rem] w-full relative overflow-hidden"
           >
             {/* Ambient inner glow */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#0891B2]/20 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 h-full w-1/3 bg-gradient-to-b from-[#0891B2]/12 to-transparent pointer-events-none" />
             
             <div className="hexagon w-14 h-14 bg-[#0891B2] flex items-center justify-center mb-6 shadow-lg shadow-[#0891B2]/30">
               <Icon className="w-6 h-6 text-white" />
             </div>
             
-            <h2 className="text-2xl font-bold text-white mb-3 leading-tight">
+            <div className="flex items-center gap-2 text-[#67C9E8] text-[10px] font-semibold uppercase tracking-[0.2em] mb-3"><span>0{currentSlide + 1}</span><span className="h-px w-8 bg-[#67C9E8]/60" /></div>
+            <h2 className="text-[1.65rem] font-bold text-white mb-3 leading-[1.08] tracking-[-0.03em]">
               {slide.title}
             </h2>
             <p className="text-slate-300 text-sm leading-relaxed mb-6">
@@ -120,7 +126,7 @@ export default function MobileOnboarding() {
                 onClick={handleNext}
                 className="rounded-full px-6 h-12 bg-[#0891B2] hover:bg-[#0680a0] text-white shadow-lg shadow-[#0891B2]/30"
               >
-                Get Started <ChevronRight className="w-4 h-4 ml-1" />
+                Get Started <ArrowUpRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
               <Button 

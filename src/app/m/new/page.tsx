@@ -443,24 +443,24 @@ export default function MobileNewCase() {
   const steps = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5];
 
   return (
-    <div className="min-h-full pb-28">
+    <div className="min-h-full pb-28 mobile-atmosphere">
       {/* Step Progress Bar */}
-      <div className="sticky top-0 z-10 bg-[#0D1220]/95 backdrop-blur border-b border-white/5 px-4 py-3">
+      <div className="sticky top-0 z-10 bg-[#0b1220]/92 backdrop-blur-xl border-b border-white/8 px-5 py-4">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Consultation</h2>
-          <span className="text-xs text-slate-500">{step + 1} / {STEPS.length}</span>
+          <div><p className="text-[10px] font-semibold text-[#67C9E8] uppercase tracking-[0.2em]">Clinical intake</p><h2 className="text-sm font-bold text-white mt-1">New consultation</h2></div>
+          <span className="text-[11px] text-slate-400 font-mono">0{step + 1} / 0{STEPS.length}</span>
         </div>
         <div className="flex gap-1">
           {STEPS.map((s, i) => (
             <div key={s} className="flex-1 flex flex-col gap-1">
-              <div className={cn("h-1 rounded-full transition-all", i <= step ? "bg-[#0891B2]" : "bg-slate-800")} />
+              <div className={cn("h-1 rounded-full transition-all duration-500", i <= step ? "bg-[#67C9E8] shadow-[0_0_10px_rgba(103,201,232,0.5)]" : "bg-slate-800")} />
               <span className={cn("text-[9px] text-center truncate", i === step ? "text-[#0891B2] font-medium" : "text-slate-600")}>{s}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-5">
         <AnimatePresence mode="wait">
           {steps[step]()}
         </AnimatePresence>
