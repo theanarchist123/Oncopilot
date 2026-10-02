@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { CheckCircle2, TriangleAlert } from "lucide-react";
+import { CheckCircle2, TriangleAlert, ChevronRight, FileCheck2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { useAnalysisResultStore } from "@/store";
@@ -35,6 +35,14 @@ const PillToggle = ({ options, value, onChange }: { options: string[], value: st
 );
 
 const STEPS = ["Upload", "Patient", "Tumour", "Biomarkers", "Health", "Review"];
+const STEP_META = [
+  { eyebrow: "Start with signal", title: "Bring the report into focus", description: "Upload a pathology report and let OnCopilot prepare the clinical record." },
+  { eyebrow: "Patient context", title: "Who are we treating?", description: "A little context makes every downstream recommendation more precise." },
+  { eyebrow: "Disease profile", title: "Map the tumour", description: "Capture the anatomy and staging details that shape the treatment path." },
+  { eyebrow: "Molecular signal", title: "Read the biology", description: "Receptors and genomic markers turn a case into a patient-specific profile." },
+  { eyebrow: "Safety context", title: "Add the guardrails", description: "Record functional status, comorbidities, and medications before analysis." },
+  { eyebrow: "Ready to reason", title: "Review the clinical picture", description: "Check the signal once before the decision engine starts working." },
+];
 
 export default function MobileNewCase() {
   const router = useRouter();
@@ -110,7 +118,7 @@ export default function MobileNewCase() {
 
   // ── Step 0: Upload ──────────────────────────────────────────────────────────
   const renderStep0 = () => (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5 flex flex-col items-center">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-5 flex flex-col items-center">
       <div className="text-center">
         <h2 className="text-xl font-bold text-white mb-1">Upload Pathology Report</h2>
         <p className="text-slate-400 text-sm">Upload a PDF or image — AI extracts biomarkers automatically.</p>
@@ -149,7 +157,7 @@ export default function MobileNewCase() {
 
   // ── Step 1: Patient ─────────────────────────────────────────────────────────
   const renderStep1 = () => (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-5">
       <h2 className="text-xl font-bold text-white">Patient Demographics</h2>
       <div className="flex gap-4 items-center">
         <div className="w-16 h-16 shrink-0 rounded-full border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center text-slate-500">
@@ -173,7 +181,7 @@ export default function MobileNewCase() {
 
   // ── Step 2: Tumour ──────────────────────────────────────────────────────────
   const renderStep2 = () => (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-5">
       <h2 className="text-xl font-bold text-white">Tumour & Staging</h2>
       <div>
         <label className="text-xs font-medium text-slate-400 mb-2 block">Clinical Stage</label>
@@ -224,7 +232,7 @@ export default function MobileNewCase() {
   const renderStep3 = () => {
     const ki67Color = biomarkers.ki67 < 14 ? "text-emerald-400" : biomarkers.ki67 < 20 ? "text-amber-400" : "text-rose-500";
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-4">
         <h2 className="text-xl font-bold text-white">Biomarker Control Panel</h2>
         {/* Receptor Status */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
@@ -283,7 +291,7 @@ export default function MobileNewCase() {
       if (e.key === 'Enter' && health.mInput) { e.preventDefault(); setHealth({ ...health, medications: [...health.medications, health.mInput], mInput: "" }); }
     };
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-4">
         <h2 className="text-xl font-bold text-white">Systemic Health Profile</h2>
         {/* LVEF Gauge */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center">
@@ -388,7 +396,7 @@ export default function MobileNewCase() {
     const compPct = Math.round((completedCount / compFields.length) * 100);
     const isComplete = compPct === 100;
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="intake-stage space-y-4">
         <h2 className="text-xl font-bold text-white">Final Clinical Review</h2>
         <div className={cn("p-4 rounded-2xl border transition-all", isComplete ? "bg-emerald-950/20 border-emerald-500/30" : "bg-slate-900 border-slate-800")}>
           <div className="flex justify-between items-center mb-4">
@@ -441,41 +449,52 @@ export default function MobileNewCase() {
   };
 
   const steps = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5];
+  const stepMeta = STEP_META[step];
+  const completion = Math.round(((step + 1) / STEPS.length) * 100);
 
   return (
     <div className="min-h-full pb-28 mobile-atmosphere">
-      {/* Step Progress Bar */}
-      <div className="sticky top-0 z-10 bg-[#0b1220]/92 backdrop-blur-xl border-b border-white/8 px-5 py-4">
-        <div className="flex items-center justify-between mb-2">
-          <div><p className="text-[10px] font-semibold text-[#67C9E8] uppercase tracking-[0.2em]">Clinical intake</p><h2 className="text-sm font-bold text-white mt-1">New consultation</h2></div>
-          <span className="text-[11px] text-slate-400 font-mono">0{step + 1} / 0{STEPS.length}</span>
+      <div className="intake-header px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-semibold text-[#67C9E8] uppercase tracking-[0.22em]">Clinical intake / {STEPS[step]}</p>
+            <h1 className="text-[1.65rem] leading-tight tracking-[-0.04em] font-bold text-white mt-2">{stepMeta.title}</h1>
+            <p className="text-xs leading-relaxed text-slate-400 mt-2 max-w-[18rem]">{stepMeta.description}</p>
+          </div>
+          <div className="relative shrink-0 w-14 h-14 flex items-center justify-center">
+            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+              <motion.circle cx="28" cy="28" r="23" fill="none" stroke="#67C9E8" strokeWidth="3" strokeLinecap="round" strokeDasharray="145" initial={{ strokeDashoffset: 145 }} animate={{ strokeDashoffset: 145 - (145 * completion) / 100 }} transition={{ duration: 0.6 }} />
+            </svg>
+            <span className="text-[11px] text-white font-mono">{completion}%</span>
+          </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5 mt-5">
           {STEPS.map((s, i) => (
-            <div key={s} className="flex-1 flex flex-col gap-1">
-              <div className={cn("h-1 rounded-full transition-all duration-500", i <= step ? "bg-[#67C9E8] shadow-[0_0_10px_rgba(103,201,232,0.5)]" : "bg-slate-800")} />
-              <span className={cn("text-[9px] text-center truncate", i === step ? "text-[#0891B2] font-medium" : "text-slate-600")}>{s}</span>
-            </div>
+            <button key={s} type="button" aria-label={`Go to ${s}`} disabled={i > step} onClick={() => i <= step && setStep(i)} className="flex-1 flex flex-col gap-1.5 disabled:cursor-default">
+              <span className={cn("h-1 rounded-full transition-all duration-500", i < step ? "bg-emerald-400" : i === step ? "bg-[#67C9E8] shadow-[0_0_10px_rgba(103,201,232,0.5)]" : "bg-slate-800")} />
+              <span className={cn("text-[8px] text-center truncate", i === step ? "text-[#67C9E8] font-semibold" : "text-slate-600")}>{s}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="px-5 pt-2">
         <AnimatePresence mode="wait">
           {steps[step]()}
         </AnimatePresence>
 
-        {/* Navigation */}
         {!isSubmitting && (
-          <div className="flex gap-3 mt-6">
+          <div className="intake-dock sticky bottom-20 z-20 flex gap-3 mt-8 p-2 rounded-2xl">
             {step > 0 && (
-              <Button variant="outline" onClick={handlePrev} className="flex-1 border-slate-700 bg-slate-900 text-slate-300 h-11 text-sm">← Back</Button>
+              <Button variant="outline" onClick={handlePrev} className="w-12 border-white/10 bg-white/5 text-slate-300 h-12 text-sm px-0" aria-label="Previous step">←</Button>
             )}
             {step < 5 && (
-              <Button variant="teal" onClick={handleNext} className="flex-1 h-11 text-sm">
-                {step === 0 ? "Skip & Enter Manually" : "Continue →"}
+              <Button variant="teal" onClick={handleNext} className="flex-1 h-12 text-sm font-semibold rounded-xl">
+                <span>{step === 0 ? "Continue manually" : "Save & continue"}</span><ChevronRight className="w-4 h-4" />
               </Button>
             )}
+            {step === 5 && <div className="flex-1 flex items-center justify-center gap-2 text-xs text-emerald-300"><FileCheck2 className="w-4 h-4" /> Ready for clinical analysis</div>}
           </div>
         )}
       </div>

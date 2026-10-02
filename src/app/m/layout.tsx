@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { BottomTabBar } from "@/components/mobile/BottomTabBar";
 import { Activity, Bell } from "lucide-react";
 import { useNotificationsStore } from "@/store";
 
 export default function MobileDashboardLayout({ children }: { children: React.ReactNode }) {
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const pathname = usePathname();
 
   return (
     <div className="flex flex-col h-[100dvh] mobile-atmosphere text-white overflow-hidden">
@@ -34,7 +37,18 @@ export default function MobileDashboardLayout({ children }: { children: React.Re
 
       {/* Main Content Area (scrollable) */}
       <main className="flex-1 overflow-y-auto pb-24 scroll-smooth">
-        {children}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 12, filter: "blur(3px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -8, filter: "blur(3px)" }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="min-h-full"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Bottom Tab Navigation */}
