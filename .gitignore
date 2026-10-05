@@ -7,6 +7,8 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+backend/venv/
 
 # debug
 npm-debug.log*
@@ -14,7 +16,18 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files
+# local env and build files
 .DS_Store
 *.pem
 .pnp.*
+tsconfig.tsbuildinfo
+
+# Datasets, scans, archives, and documents
+dataset/
+content/
+imgs_for_aws/
+*.zip
+*.tar.gz
+*.pdf
+*.docx
+*.doc

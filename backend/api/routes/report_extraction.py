@@ -15,27 +15,35 @@ import re
 import io
 import json
 import base64
+import asyncio
+from pathlib import Path
+from dotenv import load_dotenv
 import httpx
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
+# Ensure .env is explicitly loaded
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if _env_path.exists():
+    load_dotenv(dotenv_path=_env_path, override=False)
+
 router = APIRouter(prefix="/api/reports", tags=["report-extraction"])
 
-OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "helloworld")
-GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "")
-GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "")
-OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "")
+OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "helloworld").strip("\"'")
+GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "").strip("\"'")
+GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "").strip("\"'")
+OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "").strip("\"'")
 OLLAMA_BASE_URL   = "https://ollama.com/api"
 
 # Gemini REST endpoints
-GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
-GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
+GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
 
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Max pages to send for Vision extraction (keeps payload small and fast within Vercel timeout)
-MAX_VISION_PAGES = 4
+# Max pages to send for Vision extraction (covers full surgical reports + IHC addenda)
+MAX_VISION_PAGES = 8
 
 
 # ── Watermark / noise detector ────────────────────────────────────────────────
@@ -70,7 +78,8 @@ _JSON_SCHEMA = """\
   "patient": {
     "name": "patient full name or empty string",
     "age": 0,
-    "sex": "Female or Male or Other or empty string"
+    "sex": "Female or Male or Other or empty string",
+    "menopausal_status": "Premenopausal or Postmenopausal or Unknown"
   },
   "tumour": {
     "stage": "I or II or III or IV or empty string",
@@ -131,17 +140,63 @@ def _parse_gemini_json(data: dict) -> dict:
     return parsed
 
 
+def _compress_image_bytes(image_bytes: bytes, max_kb: int = 800) -> tuple[bytes, str]:
+    """Compress and resize image so neither Gemini nor OCR.space times out or hits 413 Payload Too Large."""
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        max_dim = 1600
+        if max(img.size) > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=80, optimize=True)
+        res = buf.getvalue()
+        if len(res) > max_kb * 1024:
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=65, optimize=True)
+            res = buf.getvalue()
+        print(f"[report_extraction] Image optimized: {len(image_bytes)//1024} KB -> {len(res)//1024} KB")
+        return res, "image/jpeg"
+    except Exception as e:
+        print(f"[report_extraction] Image compression skipped: {e}")
+        return image_bytes, "image/jpeg"
+
+
 async def _gemini_post(payload: dict) -> dict:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
-    async with httpx.AsyncClient(timeout=25.0) as client:
-        res = await client.post(
-            f"{GEMINI_VISION_URL}?key={GEMINI_API_KEY}",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        res.raise_for_status()
-        return res.json()
+    # Try multiple models with retry on transient 503/429
+    models_to_try = [
+        "gemini-3.8-flash",
+        "gemini-3.8-flash-preview",
+        "gemini-flash-latest",
+    ]
+    last_err: Exception | None = None
+    for model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        for attempt in range(2):
+            try:
+                async with httpx.AsyncClient(timeout=35.0) as client:
+                    res = await client.post(
+                        url,
+                        json=payload,
+                        headers={"Content-Type": "application/json"},
+                    )
+                    if res.status_code == 200:
+                        return res.json()
+                    elif res.status_code in (429, 503):
+                        print(f"[report_extraction] Gemini {model} returned {res.status_code}, retrying...")
+                        await asyncio.sleep(1.0)
+                        continue
+                    else:
+                        res.raise_for_status()
+            except Exception as e:
+                last_err = e
+                await asyncio.sleep(0.5)
+    raise last_err or RuntimeError("All Gemini endpoints failed")
 
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
@@ -260,7 +315,7 @@ async def extract_with_ollama(text: str) -> dict:
 
 # ── Default empty response ────────────────────────────────────────────────────
 _EMPTY_RESPONSE = {
-    "patient":    {"name": "", "age": 0, "sex": ""},
+    "patient":    {"name": "", "age": 0, "sex": "", "menopausal_status": "Unknown"},
     "tumour":     {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
     "biomarkers": {
         "er_status": "Unknown", "pr_status": "Unknown", "her2_status": "Unknown",
@@ -342,13 +397,51 @@ async def extract_report(file: UploadFile = File(...)):
         return await _run_text_llm_chain(text)
 
     # ══════════════════════════════════════════════════════════════════════════
+    # BRANCH C — Word Documents (.docx)
+    # ══════════════════════════════════════════════════════════════════════════
+    elif fname.endswith(".docx"):
+        print("[report_extraction] DOCX file received")
+        try:
+            import docx
+            doc = docx.Document(io.BytesIO(content))
+            docx_text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+            # Check for embedded images first if this is an image-based report document
+            images_b64: list[tuple[str, str]] = []
+            for rel in doc.part.rels.values():
+                if "image" in rel.target_ref:
+                    img_bytes, mime = _compress_image_bytes(rel.target_part.blob, max_kb=800)
+                    images_b64.append((mime, base64.b64encode(img_bytes).decode()))
+                    if len(images_b64) >= MAX_VISION_PAGES:
+                        break
+
+            if images_b64:
+                print(f"[report_extraction] DOCX embedded images: {len(images_b64)} pages to Gemini Vision")
+                parts: list[dict] = [{"text": _vision_prompt()}]
+                for mime_type, b64 in images_b64:
+                    parts.append({"inlineData": {"mimeType": mime_type, "data": b64}})
+                payload = {
+                    "contents": [{"parts": parts}],
+                    "generationConfig": {"temperature": 0.1, "response_mime_type": "application/json"},
+                }
+                data = await _gemini_post(payload)
+                return ExtractionResponse(success=True, data=_parse_gemini_json(data))
+
+            if docx_text.strip():
+                print(f"[report_extraction] DOCX text: {len(docx_text)} chars")
+                return await _run_text_llm_chain(docx_text)
+        except Exception as e_docx:
+            print(f"[report_extraction] DOCX processing failed: {e_docx}")
+            return ExtractionResponse(success=False, error=f"DOCX extraction failed: {e_docx}")
+
+    # ══════════════════════════════════════════════════════════════════════════
     # BRANCH C — Image files (JPG / PNG)
     # ══════════════════════════════════════════════════════════════════════════
     else:
         print("[report_extraction] Image file — trying Gemini Vision")
+        # Pre-compress image to ensure fast transfer and prevent 413 Payload Too Large
+        compressed_content, mime = _compress_image_bytes(content, max_kb=800)
         try:
-            b64 = base64.b64encode(content).decode()
-            mime = file.content_type or "image/jpeg"
+            b64 = base64.b64encode(compressed_content).decode()
             payload = {
                 "contents": [{
                     "parts": [
@@ -366,7 +459,7 @@ async def extract_report(file: UploadFile = File(...)):
         except Exception as e_img_vis:
             print(f"[report_extraction] Gemini Vision on image failed: {e_img_vis} — fallback to OCR.space")
             try:
-                ocr_text = await _ocr_space_image(content, file.content_type or "image/jpeg", fname)
+                ocr_text = await _ocr_space_image(compressed_content, mime, fname)
                 if not ocr_text.strip():
                     return ExtractionResponse(success=False, error="No text found in image")
                 return await _run_text_llm_chain(ocr_text)
@@ -404,6 +497,8 @@ async def _run_text_llm_chain(text: str) -> ExtractionResponse:
 
 async def _ocr_space_image(image_bytes: bytes, mime: str, fname: str) -> str:
     """Send a single image to OCR.space and return the parsed text."""
+    # Ensure under 850KB for OCR.space free tier limit (1MB)
+    image_bytes, mime = _compress_image_bytes(image_bytes, max_kb=850)
     b64 = base64.b64encode(image_bytes).decode()
     ext = fname.rsplit(".", 1)[-1].upper()
     file_type = ext if ext in ("PNG", "JPG", "JPEG", "GIF", "BMP", "TIFF", "PDF") else "AUTO"

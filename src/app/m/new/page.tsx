@@ -55,7 +55,7 @@ export default function MobileNewCase() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
-  const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
+  const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", menopausalStatus: "Postmenopausal", notes: "" });
   const [tumour, setTumour] = useState({ stage: "II", grade: 2, size: 2.5, nodes: false, nodeCount: 0 });
   const [biomarkers, setBiomarkers] = useState({
     er: "Unknown", pr: "Unknown", her2: "Unknown", ki67: 15, ki67Known: false,
@@ -76,7 +76,13 @@ export default function MobileNewCase() {
       const res = await api.extractReport(file);
       if (res.success && res.data) {
         const data = res.data;
-        if (data.patient) setPatient(p => ({ ...p, name: data.patient.name || p.name, age: data.patient.age || p.age, sex: data.patient.sex || p.sex }));
+        if (data.patient) setPatient(p => ({
+          ...p,
+          name: data.patient.name || p.name,
+          age: data.patient.age || p.age,
+          sex: data.patient.sex || p.sex,
+          menopausalStatus: data.patient.menopausal_status || (data.patient.age ? (data.patient.age >= 50 ? "Postmenopausal" : "Premenopausal") : p.menopausalStatus)
+        }));
         if (data.tumour) setTumour(t => ({ ...t, stage: data.tumour.stage || t.stage, grade: data.tumour.grade || t.grade, size: data.tumour.size || t.size, nodes: data.tumour.lymph_nodes_involved ?? t.nodes, nodeCount: data.tumour.node_count || t.nodeCount }));
         if (data.biomarkers) setBiomarkers(b => ({ ...b, er: data.biomarkers.er_status || b.er, pr: data.biomarkers.pr_status || b.pr, her2: data.biomarkers.her2_status || b.her2, ki67: data.biomarkers.ki67_percent || b.ki67, ki67Known: !!data.biomarkers.ki67_percent, brca1: data.biomarkers.brca1_status || b.brca1, brca2: data.biomarkers.brca2_status || b.brca2, tils: data.biomarkers.tils_percent || b.tils, oncotype: data.biomarkers.oncotype_dx_score || b.oncotype }));
         if (data.health) setHealth(h => ({ ...h, lvef: data.health.lvef_percent || h.lvef, ecog: data.health.ecog_score || h.ecog, comorbidities: data.health.comorbidities || h.comorbidities, medications: data.health.medications || h.medications }));
@@ -102,6 +108,7 @@ export default function MobileNewCase() {
         tils_percent: biomarkers.tils, oncotype_dx_score: biomarkers.oncotype,
         mammaprint: biomarkers.mammaprint === "Not Done" ? null : biomarkers.mammaprint,
         lvef_percent: health.lvef, ecog_score: health.ecog,
+        menopausal_status: patient.menopausalStatus,
         comorbidities: health.comorbidities.reduce((a: any, c) => ({ ...a, [c]: true }), {}),
         medications: health.medications.join(", "),
       },
@@ -166,9 +173,23 @@ export default function MobileNewCase() {
         <div className="flex-1 space-y-3">
           <Input label="Full Name" placeholder="Jane Doe" value={patient.name} onChange={e => setPatient({ ...patient, name: e.target.value })} />
           <div className="flex gap-3">
-            <div className="w-1/3"><Input type="number" label="Age" value={patient.age} onChange={e => setPatient({ ...patient, age: parseInt(e.target.value) })} /></div>
-            <div className="flex-1"><label className="text-xs font-medium text-slate-400 mb-1.5 block">Sex</label><PillToggle options={["Female", "Male", "Other"]} value={patient.sex} onChange={v => setPatient({ ...patient, sex: v })} /></div>
+            <div className="w-1/3">
+              <Input type="number" label="Age" value={patient.age} onChange={e => {
+                const a = parseInt(e.target.value) || 0;
+                setPatient({ ...patient, age: a, menopausalStatus: a >= 50 ? "Postmenopausal" : "Premenopausal" });
+              }} />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Sex</label>
+              <PillToggle options={["Female", "Male", "Other"]} value={patient.sex} onChange={v => setPatient({ ...patient, sex: v })} />
+            </div>
           </div>
+          {patient.sex === "Female" && (
+            <div>
+              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Menopausal Status</label>
+              <PillToggle options={["Premenopausal", "Postmenopausal", "Perimenopausal"]} value={patient.menopausalStatus} onChange={v => setPatient({ ...patient, menopausalStatus: v })} />
+            </div>
+          )}
         </div>
       </div>
       <div>
@@ -423,7 +444,7 @@ export default function MobileNewCase() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Patient</p>
             <p className="text-white font-semibold text-sm">{patient.name || "—"}</p>
-            <p className="text-xs text-slate-400">{patient.age}y • {patient.sex}</p>
+            <p className="text-xs text-slate-400">{patient.age}y • {patient.sex} • {patient.menopausalStatus}</p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Tumour</p>
