@@ -138,40 +138,18 @@ export const api = {
   // Engine Rules
   getEngineRules: () => fetchWithAuth("/engine/rules"),
 
-  // Report extraction (OCR + LLM)
-  //
-  // Strategy for handling Vercel's 4.5 MB body-size limit:
-  //   • Small files (< 4 MB): upload directly to the backend.
-  //   • Large PDFs (≥ 4 MB): render pages to compressed JPEG images in the
-  //     browser using pdf.js + <canvas>, then upload the resulting image.
-  //     This typically reduces a 5-6 MB scanned PDF to ~1-2 MB of JPEG data.
+  // Report extraction (multimodal AI + OCR)
   extractReport: async (file: File) => {
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB absolute max
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB absolute max
     if (file.size > MAX_FILE_SIZE) {
       throw new Error(
         `File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). ` +
-        `Maximum allowed size is 20 MB.`
+        `Maximum allowed size is 25 MB.`
       );
     }
 
-    const VERCEL_SAFE_LIMIT = 4 * 1024 * 1024; // 4 MB
-    const isPdf = file.name.toLowerCase().endsWith(".pdf");
-
-    let formData: FormData;
-
-    if (isPdf && file.size > VERCEL_SAFE_LIMIT) {
-      // Large PDF → convert pages to JPEG images client-side
-      console.log(
-        `[extractReport] PDF is ${(file.size / (1024 * 1024)).toFixed(1)} MB — ` +
-        `converting pages to JPEG images client-side…`
-      );
-      const { buildImageFormData } = await import("@/lib/pdf-to-images");
-      formData = await buildImageFormData(file);
-    } else {
-      // Small file or non-PDF → upload directly
-      formData = new FormData();
-      formData.append("file", file);
-    }
+    const formData = new FormData();
+    formData.append("file", file);
 
     // Use a generous timeout — OCR + LLM extraction can take up to 90s
     const controller = new AbortController();

@@ -15,6 +15,7 @@ import re
 import io
 import json
 import base64
+import asyncio
 import httpx
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
@@ -27,9 +28,13 @@ GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "")
 OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL   = "https://ollama.com/api"
 
-# Gemini REST endpoints
-GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
-GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
+# Gemini REST API models to try (with automatic fallback on 503/429)
+GEMINI_MODELS = [
+    "gemini-3.6-flash",
+    "gemini-3.8-flash",
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+]
 
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -37,8 +42,42 @@ GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 # Max pages to send for Vision extraction (keeps payload small and fast within Vercel timeout)
 MAX_VISION_PAGES = 4
 
-# Maximum PDF size to accept (10 MB). Larger files are rejected early to avoid OOM.
-MAX_PDF_BYTES = 10 * 1024 * 1024
+# Maximum PDF size to accept (25 MB).
+MAX_PDF_BYTES = 25 * 1024 * 1024
+
+
+def _compress_image_bytes(image_bytes: bytes, max_kb: int = 800) -> tuple[bytes, str]:
+    """
+    Compress/resize image using Pillow to guarantee it stays below max_kb.
+    This prevents OCR.space '413 Payload Too Large' errors (free tier limit 1024 KB).
+    """
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        max_dim = 1600
+        if max(img.size) > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=80, optimize=True)
+        res = buf.getvalue()
+        if len(res) > max_kb * 1024:
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=60, optimize=True)
+            res = buf.getvalue()
+        if len(res) > max_kb * 1024:
+            img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=50, optimize=True)
+            res = buf.getvalue()
+
+        print(f"[report_extraction] Image compressed: {len(image_bytes)//1024} KB -> {len(res)//1024} KB")
+        return res, "image/jpeg"
+    except Exception as e:
+        print(f"[report_extraction] Image compression fallback: {e}")
+        return image_bytes, "image/jpeg"
 
 
 # ── Watermark / noise detector ────────────────────────────────────────────────
@@ -137,14 +176,31 @@ def _parse_gemini_json(data: dict) -> dict:
 async def _gemini_post(payload: dict) -> dict:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
-    async with httpx.AsyncClient(timeout=25.0) as client:
-        res = await client.post(
-            f"{GEMINI_VISION_URL}?key={GEMINI_API_KEY}",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        res.raise_for_status()
-        return res.json()
+
+    last_err: Exception | None = None
+    for model in GEMINI_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        for attempt in range(2):
+            try:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    res = await client.post(
+                        url,
+                        json=payload,
+                        headers={"Content-Type": "application/json"},
+                    )
+                    if res.status_code == 200:
+                        return res.json()
+                    elif res.status_code in (429, 503):
+                        print(f"[report_extraction] Gemini {model} returned HTTP {res.status_code} (attempt {attempt+1}), retrying...")
+                        await asyncio.sleep(1.0)
+                        continue
+                    else:
+                        print(f"[report_extraction] Gemini {model} returned HTTP {res.status_code}: {res.text[:150]}")
+                        res.raise_for_status()
+            except Exception as e:
+                last_err = e
+                await asyncio.sleep(0.5)
+    raise last_err or RuntimeError("All Gemini endpoints failed")
 
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
@@ -380,9 +436,11 @@ async def _run_text_llm_chain(text: str) -> ExtractionResponse:
 
 async def _ocr_space_image(image_bytes: bytes, mime: str, fname: str) -> str:
     """Send a single image to OCR.space and return the parsed text."""
+    # Ensure payload is strictly under 800 KB for OCR.space free tier limit (1024 KB)
+    image_bytes, mime = _compress_image_bytes(image_bytes, max_kb=800)
     b64 = base64.b64encode(image_bytes).decode()
     ext = fname.rsplit(".", 1)[-1].upper()
-    file_type = ext if ext in ("PNG", "JPG", "JPEG", "GIF", "BMP", "TIFF", "PDF") else "AUTO"
+    file_type = ext if ext in ("PNG", "JPG", "JPEG", "GIF", "BMP", "TIFF") else "JPG"
 
     async with httpx.AsyncClient(timeout=45.0) as client:
         res = await client.post(
