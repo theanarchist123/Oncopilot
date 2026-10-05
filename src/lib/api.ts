@@ -194,6 +194,11 @@ export const api = {
       if (err.name === "AbortError") {
         throw new Error("Upload timed out. The file may be too large or the server is busy.");
       }
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        throw new Error(
+          "Upload failed: Server connection dropped. The server may have timed out or crashed while processing."
+        );
+      }
       throw err;
     } finally {
       clearTimeout(timeoutId);

@@ -125,7 +125,10 @@ def _parse_gemini_json(data: dict) -> dict:
             raw = raw[len(fence):]
     if raw.endswith("```"):
         raw = raw[:-3]
-    return json.loads(raw.strip())
+    parsed = json.loads(raw.strip())
+    if isinstance(parsed, list):
+        parsed = parsed[0] if parsed else {}
+    return parsed
 
 
 async def _gemini_post(payload: dict) -> dict:
@@ -143,32 +146,52 @@ async def _gemini_post(payload: dict) -> dict:
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
     """
-    Render key pages of a PDF to compressed JPEG with PyMuPDF, then send to
-    Gemini multimodal in a single request. Using JPEG keeps the payload ~150KB
-    instead of 5MB+, ensuring rapid response under Vercel serverless limits.
+    Render key pages of a PDF to compressed JPEG using PyMuPDF (fitz).
+    If PyMuPDF is not installed, falls back to pypdf embedded image extraction.
+    This ensures extraction works under any server environment.
     """
-    import fitz  # PyMuPDF
+    images_b64: list[tuple[str, str]] = []
 
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    n_pages = min(len(doc), MAX_VISION_PAGES)
-    print(f"[report_extraction] Gemini Vision: rendering {n_pages}/{len(doc)} pages …")
+    # Path 1: PyMuPDF (fitz) - renders any PDF page (scanned or vector) to JPEG
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        n_pages = min(len(doc), MAX_VISION_PAGES)
+        print(f"[report_extraction] Gemini Vision (fitz): rendering {n_pages}/{len(doc)} pages …")
+        mat = fitz.Matrix(1.2, 1.2)
+        for i in range(n_pages):
+            pix = doc[i].get_pixmap(matrix=mat)
+            jpg_bytes = pix.tobytes("jpeg", jpg_quality=75)
+            images_b64.append(("image/jpeg", base64.b64encode(jpg_bytes).decode()))
+            print(f"  Page {i+1}: {len(jpg_bytes)//1024} KB JPEG")
+    except ImportError:
+        print("[report_extraction] fitz (PyMuPDF) not found, falling back to pypdf image extraction")
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+            n_pages = min(len(reader.pages), MAX_VISION_PAGES)
+            for i in range(n_pages):
+                page = reader.pages[i]
+                for img in page.images:
+                    ext = img.name.split(".")[-1].lower()
+                    mime = f"image/{ext}" if ext in ("jpeg", "jpg", "png") else "image/jpeg"
+                    images_b64.append((mime, base64.b64encode(img.data).decode()))
+                    print(f"  Page {i+1} embedded image: {len(img.data)//1024} KB")
+                    break  # take main page image
+        except Exception as e_pypdf:
+            print(f"[report_extraction] pypdf image extraction failed: {e_pypdf}")
 
-    # Build parts list: text prompt + inline images
+    if not images_b64:
+        raise ValueError("Could not extract or render any images from PDF pages")
+
     parts: list[dict] = [{"text": _vision_prompt()}]
-
-    mat = fitz.Matrix(1.2, 1.2)  # clear resolution for OCR, small byte size
-    for i in range(n_pages):
-        page = doc[i]
-        pix = page.get_pixmap(matrix=mat)
-        jpg_bytes = pix.tobytes("jpeg", jpg_quality=75)
-        b64 = base64.b64encode(jpg_bytes).decode()
+    for mime_type, b64 in images_b64:
         parts.append({
             "inlineData": {
-                "mimeType": "image/jpeg",
+                "mimeType": mime_type,
                 "data": b64,
             }
         })
-        print(f"  Page {i+1}: {len(jpg_bytes)//1024} KB JPEG")
 
     payload = {
         "contents": [{"parts": parts}],
@@ -409,33 +432,43 @@ async def _ocr_space_image(image_bytes: bytes, mime: str, fname: str) -> str:
 
 async def _ocr_space_page_by_page(pdf_bytes: bytes, original_fname: str) -> ExtractionResponse:
     """
-    Fallback: render each PDF page to a small PNG and OCR them individually.
-    Used only when Gemini Vision fails. Each page PNG is well under 1 MB.
+    Fallback: OCR pages individually. Uses PyMuPDF if installed, else pypdf images.
     """
-    import fitz
+    all_text: list[str] = []
 
     try:
+        import fitz
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    except Exception as e:
-        return ExtractionResponse(success=False, error=f"Could not open PDF: {e}")
-
-    all_text: list[str] = []
-    mat = fitz.Matrix(1.2, 1.2)
-    n_pages = min(len(doc), 3)
-
-    for i in range(n_pages):
+        mat = fitz.Matrix(1.2, 1.2)
+        n_pages = min(len(doc), 3)
+        for i in range(n_pages):
+            try:
+                pix = doc[i].get_pixmap(matrix=mat)
+                jpg = pix.tobytes("jpeg", jpg_quality=75)
+                text = await _ocr_space_image(jpg, "image/jpeg", f"page{i+1}.jpg")
+                all_text.append(text)
+            except Exception as e:
+                print(f"[report_extraction] OCR.space page {i+1} failed: {e}")
+    except ImportError:
+        print("[report_extraction] fitz not available for OCR fallback, trying pypdf")
         try:
-            pix  = page = doc[i]
-            pix  = page.get_pixmap(matrix=mat)
-            jpg  = pix.tobytes("jpeg", jpg_quality=75)
-            print(f"[report_extraction] OCR.space page {i+1}: {len(jpg)//1024} KB")
-            text = await _ocr_space_image(jpg, "image/jpeg", f"page{i+1}.jpg")
-            all_text.append(text)
-        except Exception as e:
-            print(f"[report_extraction] OCR.space page {i+1} failed: {e}")
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+            for i, page in enumerate(reader.pages[:3]):
+                for img in page.images:
+                    ext = img.name.split(".")[-1].lower()
+                    mime = f"image/{ext}" if ext in ("jpeg", "jpg", "png") else "image/jpeg"
+                    try:
+                        text = await _ocr_space_image(img.data, mime, img.name)
+                        all_text.append(text)
+                    except Exception as e_ocr:
+                        print(f"[report_extraction] pypdf image OCR failed: {e_ocr}")
+                    break
+        except Exception as e_pdf:
+            print(f"[report_extraction] pypdf fallback failed: {e_pdf}")
 
     combined = "\n".join(all_text).strip()
     if not combined:
-        return ExtractionResponse(success=False, error="OCR produced no text from any page")
+        return ExtractionResponse(success=False, error="Scanned PDF OCR produced no text. Please fill fields manually.")
 
     return await _run_text_llm_chain(combined)
