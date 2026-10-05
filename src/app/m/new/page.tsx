@@ -137,7 +137,7 @@ export default function MobileNewCase() {
         </div>
       )}
       <label className={cn(
-        "w-full h-52 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden",
+        "w-full h-40 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden",
         error ? "border-rose-500/50 bg-rose-500/5" : uploadWarning ? "border-amber-500/50 bg-amber-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
       )}>
         <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess || !!uploadWarning} />
@@ -194,7 +194,7 @@ export default function MobileNewCase() {
       </div>
       <div>
         <label className="text-xs font-medium text-slate-400 mb-1.5 block">Clinical Notes</label>
-        <textarea className="w-full h-28 resize-none rounded-xl p-3 notepad focus:outline-none focus:ring-2 focus:ring-[#0891B2] border border-white/10 text-sm" placeholder="Enter preliminary clinical observations..." value={patient.notes} onChange={e => setPatient({ ...patient, notes: e.target.value })} />
+        <textarea className="w-full h-20 resize-none rounded-xl p-3 notepad focus:outline-none focus:ring-2 focus:ring-[#0891B2] border border-white/10 text-sm" placeholder="Enter preliminary clinical observations..." value={patient.notes} onChange={e => setPatient({ ...patient, notes: e.target.value })} />
         <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-end font-mono"><Save className="w-3 h-3 mr-1" />Auto-saved</p>
       </div>
     </motion.div>
@@ -506,7 +506,7 @@ export default function MobileNewCase() {
         </AnimatePresence>
 
         {!isSubmitting && (
-          <div className="intake-dock sticky bottom-20 z-20 flex gap-3 mt-8 p-2 rounded-2xl">
+          <div className="flex gap-3 mt-8 pt-4 pb-8">
             {step > 0 && (
               <Button variant="outline" onClick={handlePrev} className="w-12 border-white/10 bg-white/5 text-slate-300 h-12 text-sm px-0" aria-label="Previous step">←</Button>
             )}
