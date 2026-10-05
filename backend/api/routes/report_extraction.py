@@ -204,52 +204,17 @@ async def _gemini_post(payload: dict) -> dict:
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
     """
-    Render key pages of a PDF to compressed JPEG using PyMuPDF (fitz).
-    If PyMuPDF is not installed, falls back to pypdf embedded image extraction.
-    This ensures extraction works under any server environment.
+    Send the raw PDF directly to Gemini Vision API using native application/pdf support.
+    This skips PyMuPDF rendering entirely, saving 100% of local RAM overhead
+    and preventing OOM crashes on free-tier servers.
     """
-    images_b64: list[tuple[str, str]] = []
-
-    # Path 1: PyMuPDF (fitz) - renders any PDF page (scanned or vector) to JPEG
-    try:
-        import fitz  # PyMuPDF
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        n_pages = min(len(doc), MAX_VISION_PAGES)
-        print(f"[report_extraction] Gemini Vision (fitz): rendering {n_pages}/{len(doc)} pages …")
-        mat = fitz.Matrix(1.2, 1.2)
-        for i in range(n_pages):
-            pix = doc[i].get_pixmap(matrix=mat)
-            jpg_bytes = pix.tobytes("jpeg", jpg_quality=75)
-            images_b64.append(("image/jpeg", base64.b64encode(jpg_bytes).decode()))
-            print(f"  Page {i+1}: {len(jpg_bytes)//1024} KB JPEG")
-    except ImportError:
-        print("[report_extraction] fitz (PyMuPDF) not found, falling back to pypdf image extraction")
-        try:
-            import pypdf
-            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-            n_pages = min(len(reader.pages), MAX_VISION_PAGES)
-            for i in range(n_pages):
-                page = reader.pages[i]
-                for img in page.images:
-                    ext = img.name.split(".")[-1].lower()
-                    mime = f"image/{ext}" if ext in ("jpeg", "jpg", "png") else "image/jpeg"
-                    images_b64.append((mime, base64.b64encode(img.data).decode()))
-                    print(f"  Page {i+1} embedded image: {len(img.data)//1024} KB")
-                    break  # take main page image
-        except Exception as e_pypdf:
-            print(f"[report_extraction] pypdf image extraction failed: {e_pypdf}")
-
-    if not images_b64:
-        raise ValueError("Could not extract or render any images from PDF pages")
-
     parts: list[dict] = [{"text": _vision_prompt()}]
-    for mime_type, b64 in images_b64:
-        parts.append({
-            "inlineData": {
-                "mimeType": mime_type,
-                "data": b64,
-            }
-        })
+    parts.append({
+        "inlineData": {
+            "mimeType": "application/pdf",
+            "data": base64.b64encode(pdf_bytes).decode(),
+        }
+    })
 
     payload = {
         "contents": [{"parts": parts}],
@@ -259,6 +224,7 @@ async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
         },
     }
 
+    print(f"[report_extraction] Sending {len(pdf_bytes)//1024} KB native PDF to Gemini Vision...")
     data = await _gemini_post(payload)
     return _parse_gemini_json(data)
 
