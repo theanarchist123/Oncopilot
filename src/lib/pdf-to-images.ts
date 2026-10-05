@@ -24,12 +24,8 @@ export async function pdfToImages(
   // Dynamically import pdf.js to keep initial bundle small
   const pdfjsLib = await import("pdfjs-dist");
 
-  // Set the worker source — use the bundled worker from the package.
-  // pdfjs-dist v4.x ships workers in build/ as ESM (.mjs) files.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
+  // Use CDN for worker to avoid Webpack bundling issues with .mjs in Next.js
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
   const arrayBuffer = await pdfFile.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
