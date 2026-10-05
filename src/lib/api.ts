@@ -157,8 +157,21 @@ export const api = {
     const VERCEL_SAFE_LIMIT = 4 * 1024 * 1024; // 4 MB
     const isPdf = file.name.toLowerCase().endsWith(".pdf");
 
-    const formData = new FormData();
-    formData.append("file", file);
+    let formData: FormData;
+
+    if (isPdf && file.size > VERCEL_SAFE_LIMIT) {
+      // Large PDF → convert pages to JPEG images client-side
+      console.log(
+        `[extractReport] PDF is ${(file.size / (1024 * 1024)).toFixed(1)} MB — ` +
+        `converting pages to JPEG images client-side…`
+      );
+      const { buildImageFormData } = await import("@/lib/pdf-to-images");
+      formData = await buildImageFormData(file);
+    } else {
+      // Small file or non-PDF → upload directly
+      formData = new FormData();
+      formData.append("file", file);
+    }
 
     // Use a generous timeout — OCR + LLM extraction can take up to 90s
     const controller = new AbortController();

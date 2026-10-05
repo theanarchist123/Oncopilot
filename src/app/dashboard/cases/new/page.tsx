@@ -53,7 +53,7 @@ export default function NewCaseForm() {
     const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
     // Form State (simplified for UI demo)
-    const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", menopausalStatus: "Postmenopausal", notes: "" });
+    const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
     const [tumour, setTumour] = useState({ stage: "II", grade: 2, size: 2.5, nodes: false, nodeCount: 0 });
     const [biomarkers, setBiomarkers] = useState({
         er: "Unknown", pr: "Unknown", her2: "Unknown", ki67: 15, ki67Known: false,
@@ -82,8 +82,7 @@ export default function NewCaseForm() {
                         ...p,
                         name: data.patient.name || p.name,
                         age: data.patient.age || p.age,
-                        sex: data.patient.sex || p.sex,
-                        menopausalStatus: data.patient.menopausal_status || (data.patient.age ? (data.patient.age >= 50 ? "Postmenopausal" : "Premenopausal") : p.menopausalStatus)
+                        sex: data.patient.sex || p.sex
                     }));
                 }
                 if (data.tumour) {
@@ -169,7 +168,6 @@ export default function NewCaseForm() {
                 mammaprint: biomarkers.mammaprint === "Not Done" ? null : biomarkers.mammaprint,
                 lvef_percent: health.lvef,
                 ecog_score: health.ecog,
-                menopausal_status: patient.menopausalStatus,
                 comorbidities: health.comorbidities.reduce((a: any, c) => ({ ...a, [c]: true }), {}),
                 medications: health.medications.join(", "),
             },
@@ -322,23 +320,12 @@ export default function NewCaseForm() {
                <div className="flex-1 space-y-6">
                   <Input label="Full Name" placeholder="Jane Doe" value={patient.name} onChange={e => setPatient({...patient, name: e.target.value})} />
                   <div className="flex gap-4">
-                     <div className="w-1/3">
-                         <Input type="number" label="Age" value={patient.age} onChange={e => {
-                             const a = parseInt(e.target.value) || 0;
-                             setPatient({...patient, age: a, menopausalStatus: a >= 50 ? "Postmenopausal" : "Premenopausal"});
-                         }} />
-                     </div>
+                     <div className="w-1/3"><Input type="number" label="Age" value={patient.age} onChange={e => setPatient({...patient, age: parseInt(e.target.value)})} /></div>
                      <div className="w-2/3">
                          <label className="text-xs font-medium text-slate-400 mb-2 block">Sex Assigned at Birth</label>
                          <PillToggle options={["Female", "Male", "Other"]} value={patient.sex} onChange={v => setPatient({...patient, sex: v})} />
                      </div>
                   </div>
-                  {patient.sex === "Female" && (
-                     <div>
-                         <label className="text-xs font-medium text-slate-400 mb-2 block">Menopausal Status</label>
-                         <PillToggle options={["Premenopausal", "Postmenopausal", "Perimenopausal"]} value={patient.menopausalStatus} onChange={v => setPatient({...patient, menopausalStatus: v})} />
-                     </div>
-                  )}
                </div>
             </div>
 
@@ -668,9 +655,8 @@ export default function NewCaseForm() {
             { id: "her2", name: "HER2 Status", complete: biomarkers.her2 !== "Unknown", step: 3 },
             { id: "ki67", name: "Ki-67", complete: biomarkers.ki67Known, step: 3, warnText: "Ki-67 is missing. The system will default to a conservative classification. Results may be less precise." },
             { id: "size", name: "Tumour Size", complete: tumour.size > 0, step: 2 },
-            { id: "stage", name: "Stage", complete: !!tumour.stage, step: 2 },
-            { id: "meno", name: "Menopause", complete: !!patient.menopausalStatus, step: 1 },
             { id: "nodes", name: "Lymph Nodes", complete: true, step: 2 },
+            { id: "stage", name: "Stage", complete: !!tumour.stage, step: 2 },
             { id: "ecog", name: "ECOG Score", complete: true, step: 4 }
         ];
         const completedCount = compFields.filter(f => f.complete).length;
@@ -739,7 +725,6 @@ export default function NewCaseForm() {
                    <AccordionTrigger className="hover:no-underline py-4 text-white">Tumour & Diagnostics</AccordionTrigger>
                    <AccordionContent className="text-slate-400">
                        <ul className="grid grid-cols-2 gap-y-2 list-disc pl-4 text-sm">
-                           <li>Patient: {patient.age}y, {patient.sex} ({patient.menopausalStatus})</li>
                            <li>Stage {tumour.stage}</li><li>Grade {tumour.grade}</li>
                            <li>Size: {tumour.size.toFixed(1)} cm</li><li>Lymph Nodes: {tumour.nodes ? "Positive" : "Negative"}</li>
                        </ul>

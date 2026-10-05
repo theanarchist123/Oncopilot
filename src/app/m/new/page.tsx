@@ -55,7 +55,7 @@ export default function MobileNewCase() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
-  const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", menopausalStatus: "Postmenopausal", notes: "" });
+  const [patient, setPatient] = useState({ name: "", age: 50, sex: "Female", notes: "" });
   const [tumour, setTumour] = useState({ stage: "II", grade: 2, size: 2.5, nodes: false, nodeCount: 0 });
   const [biomarkers, setBiomarkers] = useState({
     er: "Unknown", pr: "Unknown", her2: "Unknown", ki67: 15, ki67Known: false,
@@ -76,13 +76,7 @@ export default function MobileNewCase() {
       const res = await api.extractReport(file);
       if (res.success && res.data) {
         const data = res.data;
-        if (data.patient) setPatient(p => ({
-          ...p,
-          name: data.patient.name || p.name,
-          age: data.patient.age || p.age,
-          sex: data.patient.sex || p.sex,
-          menopausalStatus: data.patient.menopausal_status || (data.patient.age ? (data.patient.age >= 50 ? "Postmenopausal" : "Premenopausal") : p.menopausalStatus)
-        }));
+        if (data.patient) setPatient(p => ({ ...p, name: data.patient.name || p.name, age: data.patient.age || p.age, sex: data.patient.sex || p.sex }));
         if (data.tumour) setTumour(t => ({ ...t, stage: data.tumour.stage || t.stage, grade: data.tumour.grade || t.grade, size: data.tumour.size || t.size, nodes: data.tumour.lymph_nodes_involved ?? t.nodes, nodeCount: data.tumour.node_count || t.nodeCount }));
         if (data.biomarkers) setBiomarkers(b => ({ ...b, er: data.biomarkers.er_status || b.er, pr: data.biomarkers.pr_status || b.pr, her2: data.biomarkers.her2_status || b.her2, ki67: data.biomarkers.ki67_percent || b.ki67, ki67Known: !!data.biomarkers.ki67_percent, brca1: data.biomarkers.brca1_status || b.brca1, brca2: data.biomarkers.brca2_status || b.brca2, tils: data.biomarkers.tils_percent || b.tils, oncotype: data.biomarkers.oncotype_dx_score || b.oncotype }));
         if (data.health) setHealth(h => ({ ...h, lvef: data.health.lvef_percent || h.lvef, ecog: data.health.ecog_score || h.ecog, comorbidities: data.health.comorbidities || h.comorbidities, medications: data.health.medications || h.medications }));
@@ -108,7 +102,6 @@ export default function MobileNewCase() {
         tils_percent: biomarkers.tils, oncotype_dx_score: biomarkers.oncotype,
         mammaprint: biomarkers.mammaprint === "Not Done" ? null : biomarkers.mammaprint,
         lvef_percent: health.lvef, ecog_score: health.ecog,
-        menopausal_status: patient.menopausalStatus,
         comorbidities: health.comorbidities.reduce((a: any, c) => ({ ...a, [c]: true }), {}),
         medications: health.medications.join(", "),
       },
@@ -137,7 +130,7 @@ export default function MobileNewCase() {
         </div>
       )}
       <label className={cn(
-        "w-full h-40 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden",
+        "w-full h-52 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden",
         error ? "border-rose-500/50 bg-rose-500/5" : uploadWarning ? "border-amber-500/50 bg-amber-500/5" : uploadSuccess ? "border-emerald-500 bg-emerald-500/10" : "border-slate-700 bg-slate-900 hover:border-[#0891B2] hover:bg-[#0891B2]/5"
       )}>
         <input type="file" className="hidden" accept=".pdf,.txt,image/*" onChange={handleFileUpload} disabled={isUploading || uploadSuccess || !!uploadWarning} />
@@ -173,28 +166,14 @@ export default function MobileNewCase() {
         <div className="flex-1 space-y-3">
           <Input label="Full Name" placeholder="Jane Doe" value={patient.name} onChange={e => setPatient({ ...patient, name: e.target.value })} />
           <div className="flex gap-3">
-            <div className="w-1/3">
-              <Input type="number" label="Age" value={patient.age} onChange={e => {
-                const a = parseInt(e.target.value) || 0;
-                setPatient({ ...patient, age: a, menopausalStatus: a >= 50 ? "Postmenopausal" : "Premenopausal" });
-              }} />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Sex</label>
-              <PillToggle options={["Female", "Male", "Other"]} value={patient.sex} onChange={v => setPatient({ ...patient, sex: v })} />
-            </div>
+            <div className="w-1/3"><Input type="number" label="Age" value={patient.age} onChange={e => setPatient({ ...patient, age: parseInt(e.target.value) })} /></div>
+            <div className="flex-1"><label className="text-xs font-medium text-slate-400 mb-1.5 block">Sex</label><PillToggle options={["Female", "Male", "Other"]} value={patient.sex} onChange={v => setPatient({ ...patient, sex: v })} /></div>
           </div>
-          {patient.sex === "Female" && (
-            <div>
-              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Menopausal Status</label>
-              <PillToggle options={["Premenopausal", "Postmenopausal", "Perimenopausal"]} value={patient.menopausalStatus} onChange={v => setPatient({ ...patient, menopausalStatus: v })} />
-            </div>
-          )}
         </div>
       </div>
       <div>
         <label className="text-xs font-medium text-slate-400 mb-1.5 block">Clinical Notes</label>
-        <textarea className="w-full h-20 resize-none rounded-xl p-3 notepad focus:outline-none focus:ring-2 focus:ring-[#0891B2] border border-white/10 text-sm" placeholder="Enter preliminary clinical observations..." value={patient.notes} onChange={e => setPatient({ ...patient, notes: e.target.value })} />
+        <textarea className="w-full h-28 resize-none rounded-xl p-3 notepad focus:outline-none focus:ring-2 focus:ring-[#0891B2] border border-white/10 text-sm" placeholder="Enter preliminary clinical observations..." value={patient.notes} onChange={e => setPatient({ ...patient, notes: e.target.value })} />
         <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-end font-mono"><Save className="w-3 h-3 mr-1" />Auto-saved</p>
       </div>
     </motion.div>
@@ -444,7 +423,7 @@ export default function MobileNewCase() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Patient</p>
             <p className="text-white font-semibold text-sm">{patient.name || "—"}</p>
-            <p className="text-xs text-slate-400">{patient.age}y • {patient.sex} • {patient.menopausalStatus}</p>
+            <p className="text-xs text-slate-400">{patient.age}y • {patient.sex}</p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Tumour</p>
@@ -506,7 +485,7 @@ export default function MobileNewCase() {
         </AnimatePresence>
 
         {!isSubmitting && (
-          <div className="flex gap-3 mt-8 pt-4 pb-8">
+          <div className="intake-dock sticky bottom-20 z-20 flex gap-3 mt-8 p-2 rounded-2xl">
             {step > 0 && (
               <Button variant="outline" onClick={handlePrev} className="w-12 border-white/10 bg-white/5 text-slate-300 h-12 text-sm px-0" aria-label="Previous step">←</Button>
             )}

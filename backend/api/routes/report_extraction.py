@@ -15,38 +15,27 @@ import re
 import io
 import json
 import base64
-import asyncio
-from pathlib import Path
-from dotenv import load_dotenv
 import httpx
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
-# Ensure .env is explicitly loaded
-_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-if _env_path.exists():
-    load_dotenv(dotenv_path=_env_path, override=False)
-
 router = APIRouter(prefix="/api/reports", tags=["report-extraction"])
 
-OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "helloworld").strip("\"'")
-GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "").strip("\"'")
-GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "").strip("\"'")
-OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "").strip("\"'")
+OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "helloworld")
+GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "")
+OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL   = "https://ollama.com/api"
 
 # Gemini REST endpoints
-GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
-GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
+GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
 
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Max pages to send for Vision extraction (keeps memory low on free-tier servers)
+# Max pages to send for Vision extraction (keeps payload small and fast within Vercel timeout)
 MAX_VISION_PAGES = 4
-
-# Maximum PDF size to accept (10 MB). Larger files are rejected early to avoid OOM.
-MAX_PDF_BYTES = 10 * 1024 * 1024
 
 
 # ── Watermark / noise detector ────────────────────────────────────────────────
@@ -81,8 +70,7 @@ _JSON_SCHEMA = """\
   "patient": {
     "name": "patient full name or empty string",
     "age": 0,
-    "sex": "Female or Male or Other or empty string",
-    "menopausal_status": "Premenopausal or Postmenopausal or Unknown"
+    "sex": "Female or Male or Other or empty string"
   },
   "tumour": {
     "stage": "I or II or III or IV or empty string",
@@ -143,78 +131,67 @@ def _parse_gemini_json(data: dict) -> dict:
     return parsed
 
 
-def _compress_image_bytes(image_bytes: bytes, max_kb: int = 800) -> tuple[bytes, str]:
-    """Compress and resize image so neither Gemini nor OCR.space times out or hits 413 Payload Too Large."""
-    try:
-        from PIL import Image
-        img = Image.open(io.BytesIO(image_bytes))
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
-        max_dim = 1600
-        if max(img.size) > max_dim:
-            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
-
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=80, optimize=True)
-        res = buf.getvalue()
-        if len(res) > max_kb * 1024:
-            buf = io.BytesIO()
-            img.save(buf, format="JPEG", quality=65, optimize=True)
-            res = buf.getvalue()
-        print(f"[report_extraction] Image optimized: {len(image_bytes)//1024} KB -> {len(res)//1024} KB")
-        return res, "image/jpeg"
-    except Exception as e:
-        print(f"[report_extraction] Image compression skipped: {e}")
-        return image_bytes, "image/jpeg"
-
-
 async def _gemini_post(payload: dict) -> dict:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
-    # Try multiple models with retry on transient 503/429
-    models_to_try = [
-        "gemini-3.8-flash",
-        "gemini-3.8-flash-preview",
-        "gemini-flash-latest",
-    ]
-    last_err: Exception | None = None
-    for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        for attempt in range(2):
-            try:
-                async with httpx.AsyncClient(timeout=35.0) as client:
-                    res = await client.post(
-                        url,
-                        json=payload,
-                        headers={"Content-Type": "application/json"},
-                    )
-                    if res.status_code == 200:
-                        return res.json()
-                    elif res.status_code in (429, 503):
-                        print(f"[report_extraction] Gemini {model} returned {res.status_code}, retrying...")
-                        await asyncio.sleep(1.0)
-                        continue
-                    else:
-                        res.raise_for_status()
-            except Exception as e:
-                last_err = e
-                await asyncio.sleep(0.5)
-    raise last_err or RuntimeError("All Gemini endpoints failed")
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        res = await client.post(
+            f"{GEMINI_VISION_URL}?key={GEMINI_API_KEY}",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        res.raise_for_status()
+        return res.json()
 
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
     """
-    Send the raw PDF directly to Gemini Vision API using native application/pdf support.
-    This skips PyMuPDF rendering entirely, saving 100% of local RAM overhead
-    and preventing OOM crashes on free-tier servers.
+    Render key pages of a PDF to compressed JPEG using PyMuPDF (fitz).
+    If PyMuPDF is not installed, falls back to pypdf embedded image extraction.
+    This ensures extraction works under any server environment.
     """
+    images_b64: list[tuple[str, str]] = []
+
+    # Path 1: PyMuPDF (fitz) - renders any PDF page (scanned or vector) to JPEG
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        n_pages = min(len(doc), MAX_VISION_PAGES)
+        print(f"[report_extraction] Gemini Vision (fitz): rendering {n_pages}/{len(doc)} pages …")
+        mat = fitz.Matrix(1.2, 1.2)
+        for i in range(n_pages):
+            pix = doc[i].get_pixmap(matrix=mat)
+            jpg_bytes = pix.tobytes("jpeg", jpg_quality=75)
+            images_b64.append(("image/jpeg", base64.b64encode(jpg_bytes).decode()))
+            print(f"  Page {i+1}: {len(jpg_bytes)//1024} KB JPEG")
+    except ImportError:
+        print("[report_extraction] fitz (PyMuPDF) not found, falling back to pypdf image extraction")
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+            n_pages = min(len(reader.pages), MAX_VISION_PAGES)
+            for i in range(n_pages):
+                page = reader.pages[i]
+                for img in page.images:
+                    ext = img.name.split(".")[-1].lower()
+                    mime = f"image/{ext}" if ext in ("jpeg", "jpg", "png") else "image/jpeg"
+                    images_b64.append((mime, base64.b64encode(img.data).decode()))
+                    print(f"  Page {i+1} embedded image: {len(img.data)//1024} KB")
+                    break  # take main page image
+        except Exception as e_pypdf:
+            print(f"[report_extraction] pypdf image extraction failed: {e_pypdf}")
+
+    if not images_b64:
+        raise ValueError("Could not extract or render any images from PDF pages")
+
     parts: list[dict] = [{"text": _vision_prompt()}]
-    parts.append({
-        "inlineData": {
-            "mimeType": "application/pdf",
-            "data": base64.b64encode(pdf_bytes).decode(),
-        }
-    })
+    for mime_type, b64 in images_b64:
+        parts.append({
+            "inlineData": {
+                "mimeType": mime_type,
+                "data": b64,
+            }
+        })
 
     payload = {
         "contents": [{"parts": parts}],
@@ -224,7 +201,6 @@ async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
         },
     }
 
-    print(f"[report_extraction] Sending {len(pdf_bytes)//1024} KB native PDF to Gemini Vision...")
     data = await _gemini_post(payload)
     return _parse_gemini_json(data)
 
@@ -284,7 +260,7 @@ async def extract_with_ollama(text: str) -> dict:
 
 # ── Default empty response ────────────────────────────────────────────────────
 _EMPTY_RESPONSE = {
-    "patient":    {"name": "", "age": 0, "sex": "", "menopausal_status": "Unknown"},
+    "patient":    {"name": "", "age": 0, "sex": ""},
     "tumour":     {"stage": "", "grade": 0, "size": 0.0, "lymph_nodes_involved": False, "node_count": 0},
     "biomarkers": {
         "er_status": "Unknown", "pr_status": "Unknown", "her2_status": "Unknown",
@@ -313,18 +289,10 @@ async def extract_report(file: UploadFile = File(...)):
     fname   = file.filename.lower()
     print(f"[report_extraction] Received: {file.filename} ({len(content)//1024} KB)")
 
-    # ── Size guard: reject oversized files early to avoid OOM on free-tier servers
-    if len(content) > MAX_PDF_BYTES:
-        return ExtractionResponse(
-            success=False,
-            warning=f"File is too large ({len(content)//1024//1024} MB). Please upload a file under 10 MB.",
-        )
-
     # ══════════════════════════════════════════════════════════════════════════
     # BRANCH A — PDF files
     # ══════════════════════════════════════════════════════════════════════════
     if fname.endswith(".pdf"):
-
 
         # Step A1: try native text extraction (only for digital/text PDFs)
         embedded_text: str = ""
@@ -374,51 +342,13 @@ async def extract_report(file: UploadFile = File(...)):
         return await _run_text_llm_chain(text)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # BRANCH C — Word Documents (.docx)
-    # ══════════════════════════════════════════════════════════════════════════
-    elif fname.endswith(".docx"):
-        print("[report_extraction] DOCX file received")
-        try:
-            import docx
-            doc = docx.Document(io.BytesIO(content))
-            docx_text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
-            # Check for embedded images first if this is an image-based report document
-            images_b64: list[tuple[str, str]] = []
-            for rel in doc.part.rels.values():
-                if "image" in rel.target_ref:
-                    img_bytes, mime = _compress_image_bytes(rel.target_part.blob, max_kb=800)
-                    images_b64.append((mime, base64.b64encode(img_bytes).decode()))
-                    if len(images_b64) >= MAX_VISION_PAGES:
-                        break
-
-            if images_b64:
-                print(f"[report_extraction] DOCX embedded images: {len(images_b64)} pages to Gemini Vision")
-                parts: list[dict] = [{"text": _vision_prompt()}]
-                for mime_type, b64 in images_b64:
-                    parts.append({"inlineData": {"mimeType": mime_type, "data": b64}})
-                payload = {
-                    "contents": [{"parts": parts}],
-                    "generationConfig": {"temperature": 0.1, "response_mime_type": "application/json"},
-                }
-                data = await _gemini_post(payload)
-                return ExtractionResponse(success=True, data=_parse_gemini_json(data))
-
-            if docx_text.strip():
-                print(f"[report_extraction] DOCX text: {len(docx_text)} chars")
-                return await _run_text_llm_chain(docx_text)
-        except Exception as e_docx:
-            print(f"[report_extraction] DOCX processing failed: {e_docx}")
-            return ExtractionResponse(success=False, error=f"DOCX extraction failed: {e_docx}")
-
-    # ══════════════════════════════════════════════════════════════════════════
     # BRANCH C — Image files (JPG / PNG)
     # ══════════════════════════════════════════════════════════════════════════
     else:
         print("[report_extraction] Image file — trying Gemini Vision")
-        # Pre-compress image to ensure fast transfer and prevent 413 Payload Too Large
-        compressed_content, mime = _compress_image_bytes(content, max_kb=800)
         try:
-            b64 = base64.b64encode(compressed_content).decode()
+            b64 = base64.b64encode(content).decode()
+            mime = file.content_type or "image/jpeg"
             payload = {
                 "contents": [{
                     "parts": [
@@ -436,7 +366,7 @@ async def extract_report(file: UploadFile = File(...)):
         except Exception as e_img_vis:
             print(f"[report_extraction] Gemini Vision on image failed: {e_img_vis} — fallback to OCR.space")
             try:
-                ocr_text = await _ocr_space_image(compressed_content, mime, fname)
+                ocr_text = await _ocr_space_image(content, file.content_type or "image/jpeg", fname)
                 if not ocr_text.strip():
                     return ExtractionResponse(success=False, error="No text found in image")
                 return await _run_text_llm_chain(ocr_text)
@@ -474,8 +404,6 @@ async def _run_text_llm_chain(text: str) -> ExtractionResponse:
 
 async def _ocr_space_image(image_bytes: bytes, mime: str, fname: str) -> str:
     """Send a single image to OCR.space and return the parsed text."""
-    # Ensure under 850KB for OCR.space free tier limit (1MB)
-    image_bytes, mime = _compress_image_bytes(image_bytes, max_kb=850)
     b64 = base64.b64encode(image_bytes).decode()
     ext = fname.rsplit(".", 1)[-1].upper()
     file_type = ext if ext in ("PNG", "JPG", "JPEG", "GIF", "BMP", "TIFF", "PDF") else "AUTO"

@@ -27,3 +27,4 @@ anyio
 # transformers>=4.40.0
 scikit-learn
 pypdf
+pymupdf

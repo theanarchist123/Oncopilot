@@ -88,10 +88,6 @@ PATTERNS: dict[str, list[str]] = {
         r"[Oo]ncotype\s+DX(?:.*?score)?[\s:]*(\d+)\b",
         r"[Rr]ecurrence [Ss]core[\s:]*(\d+)\b",
     ],
-    "MENOPAUSAL_STATUS": [
-        r"\b(post[\s-]?menopausal|pre[\s-]?menopausal|peri[\s-]?menopausal)\b",
-        r"menopausal status[\s:]*(post[\s-]?menopausal|pre[\s-]?menopausal|peri[\s-]?menopausal)",
-    ],
 }
 
 # Normalisation mappings
@@ -246,13 +242,5 @@ def map_to_clinical_fields(extraction: dict) -> dict[str, Any]:
             pass
     if v := val("LYMPH_NODES"):
         mapped["lymph_nodes_involved"] = "positive" in v.lower()
-    if v := val("MENOPAUSAL_STATUS"):
-        v_clean = v.strip().lower()
-        if "post" in v_clean:
-            mapped["menopausal_status"] = "Postmenopausal"
-        elif "pre" in v_clean:
-            mapped["menopausal_status"] = "Premenopausal"
-        elif "peri" in v_clean:
-            mapped["menopausal_status"] = "Perimenopausal"
 
     return mapped
