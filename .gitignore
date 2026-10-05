@@ -22,12 +22,20 @@ yarn-error.log*
 .pnp.*
 tsconfig.tsbuildinfo
 
-# Datasets, scans, archives, and documents
+# Datasets, scans, archives, documents, and data reports
 dataset/
 content/
 imgs_for_aws/
+backend/data/
+tcga-path-reports-main/data/
 *.zip
 *.tar.gz
 *.pdf
+*.PDF
 *.docx
 *.doc
+*.csv
+*.tsv
+*.parquet
+page0_*.png
+
