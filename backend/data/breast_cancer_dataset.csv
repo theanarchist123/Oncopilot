@@ -1,0 +1,20 @@
+patient_id,er_status,pr_status,her2_status,ki67_percent,molecular_subtype
+TCGA-A2-A1G4,Positive,Negative,Negative,8.0,Luminal A
+TCGA-CAL-01,Positive,Positive,Negative,10.0,Luminal A
+TCGA-CAL-02,Positive,Positive,Negative,5.0,Luminal A
+TCGA-CAL-03,Positive,Positive,Negative,14.0,Luminal A
+TCGA-A2-A4RX,Positive,Negative,Negative,25.0,Luminal B (HER2-)
+TCGA-AC-A23G,Positive,Positive,Negative,28.0,Luminal B (HER2-)
+TCGA-CAL-04,Positive,Positive,Negative,35.0,Luminal B (HER2-)
+TCGA-CAL-05,Positive,Negative,Negative,22.0,Luminal B (HER2-)
+TCGA-AC-A3QQ,Positive,Positive,Positive,25.0,Luminal B (HER2+)
+TCGA-E2-A10B,Positive,Positive,Positive,18.0,Luminal B (HER2+)
+TCGA-E2-A14N,Negative,Positive,Positive,20.0,Luminal B (HER2+)
+TCGA-CAL-06,Positive,Positive,Positive,40.0,Luminal B (HER2+)
+TCGA-CAL-07,Negative,Negative,Positive,45.0,HER2-Enriched
+TCGA-CAL-08,Negative,Negative,Positive,60.0,HER2-Enriched
+TCGA-CAL-09,Negative,Negative,Positive,30.0,HER2-Enriched
+TCGA-CAL-10,Negative,Negative,Negative,65.0,Triple-Negative
+TCGA-CAL-11,Negative,Negative,Negative,80.0,Triple-Negative
+TCGA-CAL-12,Negative,Negative,Negative,50.0,Triple-Negative
+TCGA-CAL-13,Negative,Negative,Negative,75.0,Triple-Negative

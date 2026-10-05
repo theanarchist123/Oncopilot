@@ -30,31 +30,41 @@ PATTERNS: dict[str, list[str]] = {
     ],
     "ER_STATUS": [
         r"\bER[\s:]*([Pp]ositive|[Nn]egative|[Pp]os|[Nn]eg|\+|-)\b",
-        r"[Ee]strogen [Rr]eceptor[\s:]*([Pp]ositive|[Nn]egative|[Pp]os|[Nn]eg)",
+        r"[Ee]strogen [Rr]eceptor[\s:]*([Pp]ositive|[Nn]egative|[Pp]os|[Nn]eg|\+|-)\b",
+        r"[Ee]strogen [Rr]eceptor[^\n\.\;]{0,40}?(?:is|are|result)?[\s:]*([Pp]ositive|[Nn]egative)\b",
         r"\bER[\s:]*([\d]+%?)\b",
     ],
     "PR_STATUS": [
         r"\bPR[\s:]*([Pp]ositive|[Nn]egative|[Pp]os|[Nn]eg|\+|-)\b",
-        r"[Pp]rogesterone [Rr]eceptor[\s:]*([Pp]ositive|[Nn]egative)",
+        r"[Pp]rogesterone [Rr]eceptor[\s:]*([Pp]ositive|[Nn]egative|[Pp]os|[Nn]eg|\+|-)\b",
+        r"[Pp]rogesterone [Rr]eceptor[^\n\.\;]{0,40}?(?:is|are|result)?[\s:]*([Pp]ositive|[Nn]egative)\b",
     ],
     "HER2_STATUS": [
         r"\bHER[2-]?[\s:]*([Pp]ositive|[Nn]egative|equivocal|[0-3]\+)\b",
+        r"Her-?2\s*/\s*neu[\s:]*([Pp]ositive|[Nn]egative|equivocal|[0-3]\+)\b",
+        r"c-erbB-2[\s:]*([Pp]ositive|[Nn]egative|equivocal|[0-3]\+)\b",
         r"HER2 protein expression[\s:]*([0-3]\+)",
         r"FISH[\s:]*(amplified|not amplified|negative|positive)",
+        r"Her-?2\s*/\s*neu\s+FISH[\s\w:]*?(not amplified|amplified|negative|positive)",
+        r"\bHER-?2[\s\w/]*?:\s*([Pp]ositive|[Nn]egative|equivocal|[0-3]\+)\b",
     ],
     "KI67_VALUE": [
         r"\bKi[\s-]?67[\s:]*(\d+\.?\d*)%?\b",
         r"proliferation index[\s:]*(\d+\.?\d*)%?",
         r"MIB[\s-]?1[\s:]*(\d+\.?\d*)%?",
+        r"Ki[\s-]?67[\s\w:]*?([Ll]ow|[Bb]orderline|[Hh]igh)\b",
+        r"Ki[\s-]?67[\s\w:]*?Nuclei Stained[\s:]*(\d+\.?\d*)%?",
     ],
     "GRADE": [
         r"\b[Gg]rade[\s:]*([1-3]|I{1,3})\b",
         r"\b([Ww]ell|[Mm]oderately|[Pp]oorly)\s+differentiated\b",
         r"\bBR\s+[Gg]rade[\s:]*([1-3])\b",
+        r"nuclear grade\s+([1-3]|I{1,3})\b",
     ],
     "LYMPH_NODES": [
         r"(\d+)\s*/\s*(\d+)\s+(?:lymph\s+)?nodes?\s+(?:were\s+)?positive",
         r"(\d+)\s+(?:of|out of)\s+(\d+)\s+(?:axillary\s+)?nodes?\s+(?:involved|positive)",
+        r"metastatic carcinoma to\s+(\d+)\s+of\s+(\d+)\s+(?:axillary\s+)?lymph\s+nodes?",
         r"lymph node[s]?\s+(?:involvement|status)[\s:]*([Pp]ositive|[Nn]egative)",
     ],
     "HISTOLOGY": [
@@ -87,6 +97,8 @@ _NORM: dict[str, str] = {
     "equivocal": "Equivocal", "amplified": "Positive",
     "not amplified": "Negative", "not detected": "Negative",
     "detected": "Positive", "pathogenic": "Positive",
+    "0+": "Negative", "1+": "Negative", "2+": "Equivocal", "3+": "Positive",
+    "low": "Low", "borderline": "Borderline", "high": "High",
 }
 
 
@@ -176,10 +188,18 @@ def map_to_clinical_fields(extraction: dict) -> dict[str, Any]:
     if v := val("HER2_STATUS"):
         mapped["her2_status"] = v
     if v := val("KI67_VALUE"):
-        try:
-            mapped["ki67_percent"] = float(re.sub(r"[^0-9.]", "", v))
-        except ValueError:
-            pass
+        v_low = v.strip().lower()
+        if v_low == "low":
+            mapped["ki67_percent"] = 8.0
+        elif v_low == "borderline":
+            mapped["ki67_percent"] = 15.0
+        elif v_low == "high":
+            mapped["ki67_percent"] = 30.0
+        else:
+            try:
+                mapped["ki67_percent"] = float(re.sub(r"[^0-9.]", "", v))
+            except ValueError:
+                pass
     if v := val("TUMOUR_SIZE"):
         try:
             # Normalise mm to cm
@@ -192,8 +212,14 @@ def map_to_clinical_fields(extraction: dict) -> dict[str, Any]:
     if v := val("TNM_STAGE"):
         mapped["stage"] = v
     if v := val("GRADE"):
-        grade_map = {"well differentiated": 1, "moderately differentiated": 2, "poorly differentiated": 3}
-        mapped["grade"] = grade_map.get(v.lower(), v)
+        grade_map = {
+            "well differentiated": 1, "moderately differentiated": 2, "poorly differentiated": 3,
+            "1": 1, "2": 2, "3": 3,
+            "i": 1, "ii": 2, "iii": 3,
+            "grade 1": 1, "grade 2": 2, "grade 3": 3,
+            "grade i": 1, "grade ii": 2, "grade iii": 3,
+        }
+        mapped["grade"] = grade_map.get(str(v).strip().lower(), 2)
     if v := val("HISTOLOGY"):
         mapped["histological_type"] = v
     if v := val("PD_L1"):

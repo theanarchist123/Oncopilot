@@ -28,8 +28,8 @@ OLLAMA_API_KEY    = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_BASE_URL   = "https://ollama.com/api"
 
 # Gemini REST endpoints
-GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
-GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
+GEMINI_TEXT_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
 
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"

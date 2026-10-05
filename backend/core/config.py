@@ -41,7 +41,11 @@ class Settings(BaseSettings):
                 origins.append(normalized.replace("127.0.0.1", "localhost"))
         return list(dict.fromkeys(origins))
 
-    model_config = {"env_file": str(Path(__file__).resolve().parent.parent / ".env"), "case_sensitive": False}
+    model_config = {
+        "env_file": str(Path(__file__).resolve().parent.parent / ".env"),
+        "case_sensitive": False,
+        "extra": "ignore",
+    }
 
 
 @lru_cache()

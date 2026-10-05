@@ -61,6 +61,7 @@ class ClinicalInput:
     menopausal_status: str = "Unknown"
     ecog_score: int = 0
     tumour_size: float | None = None
+    histological_type: str = "Unknown"
 
     # Stage 5 — safety
     lvef_percent: float | None = None
