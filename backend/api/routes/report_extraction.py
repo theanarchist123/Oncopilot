@@ -34,8 +34,8 @@ GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gem
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Max pages to send for Vision extraction (keeps token usage reasonable)
-MAX_VISION_PAGES = 10
+# Max pages to send for Vision extraction (keeps payload small and fast within Vercel timeout)
+MAX_VISION_PAGES = 4
 
 
 # ── Watermark / noise detector ────────────────────────────────────────────────
@@ -131,7 +131,7 @@ def _parse_gemini_json(data: dict) -> dict:
 async def _gemini_post(payload: dict) -> dict:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
-    async with httpx.AsyncClient(timeout=90.0) as client:
+    async with httpx.AsyncClient(timeout=25.0) as client:
         res = await client.post(
             f"{GEMINI_VISION_URL}?key={GEMINI_API_KEY}",
             json=payload,
@@ -143,8 +143,9 @@ async def _gemini_post(payload: dict) -> dict:
 
 async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
     """
-    Render every page of a PDF to PNG with PyMuPDF, then send all images
-    to Gemini multimodal in a single request for structured extraction.
+    Render key pages of a PDF to compressed JPEG with PyMuPDF, then send to
+    Gemini multimodal in a single request. Using JPEG keeps the payload ~150KB
+    instead of 5MB+, ensuring rapid response under Vercel serverless limits.
     """
     import fitz  # PyMuPDF
 
@@ -152,22 +153,22 @@ async def extract_with_gemini_vision(pdf_bytes: bytes) -> dict:
     n_pages = min(len(doc), MAX_VISION_PAGES)
     print(f"[report_extraction] Gemini Vision: rendering {n_pages}/{len(doc)} pages …")
 
-    # Build the parts list: one text prompt + one inline image per page
+    # Build parts list: text prompt + inline images
     parts: list[dict] = [{"text": _vision_prompt()}]
 
-    mat = fitz.Matrix(1.5, 1.5)  # 108 DPI — good OCR quality, reasonable size
+    mat = fitz.Matrix(1.2, 1.2)  # clear resolution for OCR, small byte size
     for i in range(n_pages):
         page = doc[i]
         pix = page.get_pixmap(matrix=mat)
-        png_bytes = pix.tobytes("png")
-        b64 = base64.b64encode(png_bytes).decode()
+        jpg_bytes = pix.tobytes("jpeg", jpg_quality=75)
+        b64 = base64.b64encode(jpg_bytes).decode()
         parts.append({
             "inlineData": {
-                "mimeType": "image/png",
+                "mimeType": "image/jpeg",
                 "data": b64,
             }
         })
-        print(f"  Page {i+1}: {len(png_bytes)//1024} KB PNG")
+        print(f"  Page {i+1}: {len(jpg_bytes)//1024} KB JPEG")
 
     payload = {
         "contents": [{"parts": parts}],
@@ -321,14 +322,33 @@ async def extract_report(file: UploadFile = File(...)):
     # BRANCH C — Image files (JPG / PNG)
     # ══════════════════════════════════════════════════════════════════════════
     else:
-        print("[report_extraction] Image file — OCR.space")
+        print("[report_extraction] Image file — trying Gemini Vision")
         try:
-            ocr_text = await _ocr_space_image(content, file.content_type or "image/jpeg", fname)
-        except Exception as e:
-            return ExtractionResponse(success=False, error=f"OCR failed: {e}")
-        if not ocr_text.strip():
-            return ExtractionResponse(success=False, error="No text found in image")
-        return await _run_text_llm_chain(ocr_text)
+            b64 = base64.b64encode(content).decode()
+            mime = file.content_type or "image/jpeg"
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"text": _vision_prompt()},
+                        {"inlineData": {"mimeType": mime, "data": b64}}
+                    ]
+                }],
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "response_mime_type": "application/json",
+                },
+            }
+            data = await _gemini_post(payload)
+            return ExtractionResponse(success=True, data=_parse_gemini_json(data))
+        except Exception as e_img_vis:
+            print(f"[report_extraction] Gemini Vision on image failed: {e_img_vis} — fallback to OCR.space")
+            try:
+                ocr_text = await _ocr_space_image(content, file.content_type or "image/jpeg", fname)
+                if not ocr_text.strip():
+                    return ExtractionResponse(success=False, error="No text found in image")
+                return await _run_text_llm_chain(ocr_text)
+            except Exception as e:
+                return ExtractionResponse(success=False, error=f"Image extraction failed: {e}")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -400,14 +420,16 @@ async def _ocr_space_page_by_page(pdf_bytes: bytes, original_fname: str) -> Extr
         return ExtractionResponse(success=False, error=f"Could not open PDF: {e}")
 
     all_text: list[str] = []
-    mat = fitz.Matrix(1.5, 1.5)
+    mat = fitz.Matrix(1.2, 1.2)
+    n_pages = min(len(doc), 3)
 
-    for i, page in enumerate(doc):
+    for i in range(n_pages):
         try:
+            pix  = page = doc[i]
             pix  = page.get_pixmap(matrix=mat)
-            png  = pix.tobytes("png")
-            print(f"[report_extraction] OCR.space page {i+1}: {len(png)//1024} KB")
-            text = await _ocr_space_image(png, "image/png", f"page{i+1}.png")
+            jpg  = pix.tobytes("jpeg", jpg_quality=75)
+            print(f"[report_extraction] OCR.space page {i+1}: {len(jpg)//1024} KB")
+            text = await _ocr_space_image(jpg, "image/jpeg", f"page{i+1}.jpg")
             all_text.append(text)
         except Exception as e:
             print(f"[report_extraction] OCR.space page {i+1} failed: {e}")
