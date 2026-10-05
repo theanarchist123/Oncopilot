@@ -37,6 +37,9 @@ REQUIRED_COLUMNS = [
     ("clinical_data", "pam50", "VARCHAR(100)"),
     ("clinical_data", "allergies", "TEXT"),
     ("clinical_data", "histological_type", "VARCHAR(255)"),
+
+    # Added: menopausal status (post-MVP field added for Tamoxifen vs AI selection)
+    ("clinical_data", "menopausal_status", "VARCHAR(50)"),
 ]
 
 

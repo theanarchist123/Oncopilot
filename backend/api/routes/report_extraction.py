@@ -42,8 +42,11 @@ GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gem
 # Groq REST API (OpenAI-compatible)
 GROQ_REST_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Max pages to send for Vision extraction (covers full surgical reports + IHC addenda)
-MAX_VISION_PAGES = 8
+# Max pages to send for Vision extraction (keeps memory low on free-tier servers)
+MAX_VISION_PAGES = 4
+
+# Maximum PDF size to accept (10 MB). Larger files are rejected early to avoid OOM.
+MAX_PDF_BYTES = 10 * 1024 * 1024
 
 
 # ── Watermark / noise detector ────────────────────────────────────────────────
@@ -344,10 +347,18 @@ async def extract_report(file: UploadFile = File(...)):
     fname   = file.filename.lower()
     print(f"[report_extraction] Received: {file.filename} ({len(content)//1024} KB)")
 
+    # ── Size guard: reject oversized files early to avoid OOM on free-tier servers
+    if len(content) > MAX_PDF_BYTES:
+        return ExtractionResponse(
+            success=False,
+            warning=f"File is too large ({len(content)//1024//1024} MB). Please upload a file under 10 MB.",
+        )
+
     # ══════════════════════════════════════════════════════════════════════════
     # BRANCH A — PDF files
     # ══════════════════════════════════════════════════════════════════════════
     if fname.endswith(".pdf"):
+
 
         # Step A1: try native text extraction (only for digital/text PDFs)
         embedded_text: str = ""
